@@ -1874,8 +1874,9 @@ function rmPlay(root,si){
   seq.forEach((m,i)=>{
     const t=t0+i*step, o=c.createOscillator(), g=c.createGain();
     o.type='triangle'; o.frequency.value=midiToFreq(m);
-    g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.3,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+step*1.6);
-    o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+step*1.7); oscs.push(o);
+    /* Short and detached: each note dies away well before the next starts, so nothing overlaps. */
+    g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.3,t+0.008); g.gain.setValueAtTime(0.3,t+0.12); g.gain.exponentialRampToValueAtTime(0.0001,t+0.2);
+    o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+0.22); oscs.push(o);
     if(!state.listening) timers.push(setTimeout(()=>setDet({midi:m,freq:midiToFreq(m),cents:0,src:'scale'}),(t-c.currentTime)*1000));
   });
   timers.push(setTimeout(()=>{rmPlaying=null; if(state.det&&state.det.src==='scale') setDet(null); renderRm();},(t0-c.currentTime+seq.length*step+0.3)*1000));
