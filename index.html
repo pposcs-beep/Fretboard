@@ -164,6 +164,8 @@ select{min-height:44px;width:100%;padding:0 10px;border:1px solid var(--line);bo
 .btnrow{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center}
 @media (prefers-reduced-motion:reduce){.tab{scroll-behavior:auto}}
 .microw{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-top:12px}
+.sens{display:flex;align-items:center;gap:8px;min-height:44px}
+.sens input{width:150px;accent-color:var(--accent)}
 .lvl{flex:0 1 240px;min-width:120px;height:12px;border-radius:6px;background:var(--line);overflow:hidden}
 .lvl span{display:block;height:100%;width:0;background:var(--accent)}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
@@ -236,6 +238,7 @@ select{min-height:44px;width:100%;padding:0 10px;border:1px solid var(--line);bo
     <div class="lhead">
       <button type="button" class="primary" id="listen" aria-pressed="false">Listen</button>
       <label class="chk"><input type="checkbox" id="snd" checked> Sound on tap</label>
+      <label class="sens"><span class="lbl">Sensitivity</span><input type="range" id="sens" min="1" max="10" step="1" value="6" aria-describedby="sensval"><span class="mono" id="sensval">6</span></label>
       <label class="dev" id="devwrap" hidden><span class="lbl">Input</span><select id="dev"></select></label>
     </div>
     <div class="read">
@@ -525,11 +528,11 @@ async function analyzeSong(mono,sr,onProgress){
 function noteName(pc,acc){return (acc==='flat'?FLAT:SHARP)[((pc%12)+12)%12];}
 function midiToFreq(m){return 440*Math.pow(2,(m-69)/12);}
 function freqToMidi(f){return 69+12*Math.log2(f/440);}
-function yin(buf,sr){
+function yin(buf,sr,clar){
   const n=buf.length, W=n>>1;
   let sum=0;
   for(let i=0;i<n;i++) sum+=buf[i]*buf[i];
-  if(Math.sqrt(sum/n)<0.002) return -1;
+  if(Math.sqrt(sum/n)<0.0015) return -1;
   const minLag=Math.max(2,Math.floor(sr/1400));
   const maxLag=Math.min(W-2,Math.ceil(sr/70));
   const d=new Float32Array(maxLag+2);
@@ -544,7 +547,7 @@ function yin(buf,sr){
   for(let tau=1;tau<=maxLag+1;tau++){run+=d[tau]; cm[tau]=run?d[tau]*tau/run:1;}
   let best=-1;
   for(let t=minLag;t<=maxLag;t++){
-    if(cm[t]<0.2){
+    if(cm[t]<(clar||0.2)){
       while(t+1<=maxLag && cm[t+1]<cm[t]) t++;
       best=t; break;
     }
@@ -1258,6 +1261,10 @@ $('neck').addEventListener('click',e=>{
 });
 
 /* Listen */
+let sens=6; try{const v=+localStorage.getItem('fv-sens'); if(v>=1&&v<=10) sens=v;}catch(e){}
+let inGain=null, hist=[];
+const sensGain=()=>Math.pow(2,(sens-5)/1.4);   /* 1: x0.6 ... 6: x1.6 ... 10: x12 */
+const sensClar=()=>Math.min(0.32,0.12+0.02*sens); /* how unclear a note may be and still count */
 let stream=null, src=null, analyser=null, buf=null, spec=null, chroma=null, raf=0, lastRun=0, cand=-1, candN=0, lastHeard=0, cCand='', cCandN=0, lastChord=0;
 function msg(t){const el=$('lmsg'); el.textContent=t; el.hidden=!t;}
 async function fillDevices(){
@@ -1284,7 +1291,7 @@ function tick(t){
   let rms=0; for(let i=0;i<buf.length;i++) rms+=buf[i]*buf[i]; rms=Math.sqrt(rms/buf.length);
   let heard=null;
   showLevel(rms);
-  if(rms>0.004){
+  if(rms>0.003){
     analyser.getFloatFrequencyData(spec);
     const cr=chromaFromSpectrum(spec,ctx.sampleRate,analyser.fftSize);
     if(cr){
@@ -1306,18 +1313,19 @@ function tick(t){
   }
   if(state.chordDet&&t-lastChord<700) return;
   if(state.chordDet) setChord(null);
-  const f=yin(buf.subarray(buf.length-4096),ctx.sampleRate);
-  const mf=f>0?freqToMidi(f):-1, m=Math.round(mf);
-  if(f>0&&m>=36&&m<=90){
-    if(m===cand) candN++; else {cand=m; candN=1;}
-    if(candN>=2){
-      lastHeard=t;
-      setDet({midi:m,freq:f,cents:Math.round((mf-m)*100),src:'mic'});
-    }
-  }else{
-    cand=-1; candN=0;
-    if(state.det&&state.det.src==='mic'&&t-lastHeard>450) setDet(null);
-  }
+  const f=yin(buf.subarray(buf.length-4096),ctx.sampleRate,sensClar());
+  const mf=f>0?freqToMidi(f):-1, m=f>0?Math.round(mf):-1;
+  /* Smooth: show a note once it is the most common pitch in the last 5 reads, and hold it briefly. */
+  hist.push(m>=36&&m<=90?m:-1); if(hist.length>5) hist.shift();
+  const cnt={}; let best=-1, bestN=0;
+  hist.forEach(v=>{if(v<0) return; cnt[v]=(cnt[v]||0)+1; if(cnt[v]>bestN){bestN=cnt[v]; best=v;}});
+  const need=sens>=8?2:3;
+  if(best>=0&&bestN>=need){
+    lastHeard=t;
+    const cur=state.det&&state.det.src==='mic'?state.det:null;
+    if(m===best) setDet({midi:m,freq:f,cents:Math.round((mf-m)*100),src:'mic'});
+    else if(!cur||cur.midi!==best) setDet({midi:best,freq:midiToFreq(best),cents:0,src:'mic'});
+  }else if(state.det&&state.det.src==='mic'&&t-lastHeard>700) setDet(null);
 }
 function micStat(t){$('micstat').textContent=t;}
 let lvlT=0;
@@ -1371,7 +1379,8 @@ async function startListen(deviceId){
   if(c.state!=='running'){try{await c.resume();}catch(e){}}
   src=c.createMediaStreamSource(stream);
   analyser=c.createAnalyser(); analyser.fftSize=8192; analyser.smoothingTimeConstant=0.5;
-  src.connect(analyser);
+  inGain=c.createGain(); inGain.gain.value=sensGain();
+  src.connect(inGain); inGain.connect(analyser);
   /* Safari only runs nodes that lead to the speakers, so send the analyser through a silent gain. */
   const mute=c.createGain(); mute.gain.value=0; analyser.connect(mute); mute.connect(c.destination);
   const tr=stream.getAudioTracks()[0];
@@ -1389,6 +1398,7 @@ async function startListen(deviceId){
 function stopListen(){
   cancelAnimationFrame(raf); raf=0;
   try{if(src) src.disconnect();}catch(e){}
+  try{if(inGain) inGain.disconnect();}catch(e){} inGain=null; hist=[];
   if(stream) stream.getTracks().forEach(t=>t.stop());
   stream=null; src=null; analyser=null;
   state.listening=false;
@@ -1398,6 +1408,12 @@ function stopListen(){
   $('listen').setAttribute('aria-pressed','false');
   if(state.det&&state.det.src==='mic') setDet(null); else renderRead();
 }
+$('sens').value=String(sens); $('sensval').textContent=String(sens);
+$('sens').addEventListener('input',e=>{
+  sens=+e.target.value; $('sensval').textContent=String(sens);
+  if(inGain) inGain.gain.value=sensGain();
+  try{localStorage.setItem('fv-sens',String(sens));}catch(err){}
+});
 $('listen').addEventListener('click',()=>{if(state.listening) stopListen(); else {unlockAudio(); startListen();}});
 $('dev').addEventListener('change',async e=>{
   const id=e.target.value;
