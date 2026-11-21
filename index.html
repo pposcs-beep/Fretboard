@@ -192,7 +192,7 @@ select{min-height:44px;width:100%;padding:0 10px;border:1px solid var(--line);bo
 .dia button.q0[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 .dia button.q1[aria-pressed="true"]{background:var(--root);border-color:var(--root);color:var(--on-root)}
 .dia button.q5[aria-pressed="true"]{background:var(--good);border-color:var(--good);color:var(--on-good)}
-.barre{fill:var(--fg);opacity:.28}
+.barre{fill:var(--string);opacity:.55}
 .dia button,.psteps button{min-height:52px;border:1px solid var(--line);background:var(--bg);border-radius:6px;cursor:pointer;display:grid;place-content:center;gap:2px;padding:4px 2px;font:500 15px var(--f-mono)}
 .dia button small,.psteps button small{font:500 11px var(--f-body);color:var(--muted);letter-spacing:.04em}
 .dia button[aria-pressed="true"],.psteps button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
@@ -767,8 +767,8 @@ function renderNeck(){
     const tones=new Set(CHORDS[state.chord].iv.map(i=>(state.key+i)%12));
     const sh=bsh, on=new Set();
     sh.forEach((z,i)=>{
-      const atR=[]; z.frets.forEach((v,s)=>{if(v===z.r&&z.r>0) atR.push(s); if(v!=null) on.add(s+','+v);});
-      if(atR.length>=3){
+      const atR=[]; z.frets.forEach((v,s)=>{if(v!=null){atR.push(s); on.add(s+','+v);}});
+      if(z.r>0&&state.chord!==5){
         const s0=Math.min.apply(null,atR), s1=Math.max.apply(null,atR);
         z.barT='<rect class="barre" x="'+r1(cx(z.r)-9)+'" y="'+(sy(s0)-15)+'" width="18" height="'+(sy(s1)-sy(s0)+30)+'" rx="9"/>';
       }
