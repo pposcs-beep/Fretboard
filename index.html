@@ -168,6 +168,33 @@ select{min-height:44px;width:100%;padding:0 10px;border:1px solid var(--line);bo
 .sens input{width:150px;accent-color:var(--accent)}
 .lvl{flex:0 1 240px;min-width:120px;height:12px;border-radius:6px;background:var(--line);overflow:hidden}
 .lvl span{display:block;height:100%;width:0;background:var(--accent)}
+.cof{display:grid;gap:14px 20px;align-items:start}
+@media (min-width:640px){.cof{grid-template-columns:minmax(220px,280px) 1fr}}
+.cofsvg{width:100%;max-width:280px;height:auto;justify-self:center;touch-action:manipulation}
+.cofsvg .w{cursor:pointer}
+.cofsvg .w path{fill:var(--bg);stroke:var(--line);stroke-width:1}
+.cofsvg .w.fam path{fill:color-mix(in srgb,var(--accent) 16%,var(--bg))}
+.cofsvg .w.sel path{fill:var(--accent)}
+.cofsvg .w text{font:500 14px var(--f-mono);fill:var(--fg);pointer-events:none}
+.cofsvg .w.min text{font-size:12px}
+.cofsvg .w.sel text{fill:var(--on-accent)}
+.cofsvg .w:focus{outline:none}
+.cofsvg .w:focus-visible path{stroke:var(--accent);stroke-width:3}
+.cofsvg .ctr{font:700 18px var(--f-display);fill:var(--fg)}
+.cofsvg .ctr2{font:400 11px var(--f-body);fill:var(--muted)}
+.cofside{display:grid;gap:12px;min-width:0}
+.dia{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+@media (min-width:900px){.dia{grid-template-columns:repeat(7,1fr)}}
+.dia button,.psteps button{min-height:52px;border:1px solid var(--line);background:var(--bg);border-radius:6px;cursor:pointer;display:grid;place-content:center;gap:2px;padding:4px 2px;font:500 15px var(--f-mono)}
+.dia button small,.psteps button small{font:500 11px var(--f-body);color:var(--muted);letter-spacing:.04em}
+.dia button[aria-pressed="true"],.psteps button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.dia button[aria-pressed="true"] small,.psteps button[aria-pressed="true"] small{color:var(--on-accent)}
+.prog summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:500;color:var(--accent)}
+.pchips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.pchips button{min-height:44px;padding:0 12px;border:1px solid var(--line);background:var(--bg);border-radius:22px;cursor:pointer;font:500 14px var(--f-mono)}
+.pchips button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.psteps{display:flex;flex-wrap:wrap;gap:6px;align-items:stretch}
+.psteps button{min-width:64px;padding:4px 10px}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{min-width:56px;text-align:center;border:1px solid var(--line);border-radius:6px;padding:6px 10px;background:var(--bg)}
 .chip b{display:block;font:500 18px/1.3 var(--f-mono)}
@@ -232,6 +259,29 @@ select{min-height:44px;width:100%;padding:0 10px;border:1px solid var(--line);bo
     <p class="hint caged" id="cagedhint" hidden></p>
     <p class="hint caged" id="trihint" hidden></p>
     <p class="hint">Tap any fret to hear that note and see whether it belongs.</p>
+  </section>
+
+  <section class="panel" aria-label="Circle of fifths">
+    <h2>Circle of fifths</h2>
+    <div class="cof">
+      <svg class="cofsvg" id="cof" viewBox="0 0 300 300" role="group" aria-label="Circle of fifths. Outer ring major keys, inner ring minor keys"></svg>
+      <div class="cofside">
+        <div>
+          <span class="lbl" id="dialbl">Chords in the key</span>
+          <div class="dia" id="dia" role="group" aria-labelledby="dialbl"></div>
+        </div>
+        <div class="btnrow">
+          <button type="button" class="ghost" id="keynotes" aria-pressed="false">Key notes on the neck</button>
+          <span class="mono" id="keynotelist"></span>
+        </div>
+        <details class="prog" id="prog">
+          <summary>Common progressions</summary>
+          <div class="pchips" id="pchips" role="group" aria-label="Progressions"></div>
+          <div class="psteps" id="psteps" role="group" aria-label="Progression chords"></div>
+        </details>
+        <p class="hint">Tap a key on the circle, then tap a chord to see it on the neck. The shaded keys next to yours are its closest relatives: the IV and V on the outside, the minor chords on the inside.</p>
+      </div>
+    </div>
   </section>
 
   <section class="panel" aria-label="Listen">
@@ -565,12 +615,14 @@ function yin(buf,sr,clar){
 'use strict';
 const $=id=>document.getElementById(id);
 const STORE='fv-state-1';
-const state={key:9,kind:'scale',scale:3,chord:1,caged:'all',fill:'chord',strset:'all',labels:'note',acc:'sharp',det:null,chordDet:null,listening:false};
+const state={ckey:9,cmode:'maj',prog:-1,pstep:0,key:9,kind:'scale',scale:3,chord:1,caged:'all',fill:'chord',strset:'all',labels:'note',acc:'sharp',det:null,chordDet:null,listening:false};
 try{
   const s=JSON.parse(localStorage.getItem(STORE)||'null');
-  if(s){for(const k of ['key','kind','scale','chord','caged','fill','strset','labels','acc']) if(k in s) state[k]=s[k];}
+  if(s){for(const k of ['key','kind','scale','chord','caged','fill','strset','labels','acc','ckey','cmode','prog']) if(k in s) state[k]=s[k];}
 }catch(e){}
 state.key=((parseInt(state.key,10)||0)%12+12)%12;
+state.ckey=((parseInt(state.ckey,10)||0)%12+12)%12; if(state.cmode!=='min') state.cmode='maj';
+if(!(Number.isInteger(state.prog)&&state.prog>=0&&state.prog<5)) state.prog=-1;
 if(['scale','chord','caged'].indexOf(state.kind)<0) state.kind='scale';
 if(!SCALES[state.scale]) state.scale=3;
 if(!CHORDS[state.chord]) state.chord=1;
@@ -580,7 +632,7 @@ if(state.strset!=='all'&&!STRSETS[state.strset]) state.strset='all';
 if(state.labels!=='note'&&state.labels!=='degree') state.labels='note';
 if(state.acc!=='sharp'&&state.acc!=='flat') state.acc='sharp';
 function save(){
-  try{localStorage.setItem(STORE,JSON.stringify({key:state.key,kind:state.kind,scale:state.scale,chord:state.chord,caged:state.caged,fill:state.fill,strset:state.strset,labels:state.labels,acc:state.acc}));}catch(e){}
+  try{localStorage.setItem(STORE,JSON.stringify({key:state.key,kind:state.kind,scale:state.scale,chord:state.chord,caged:state.caged,fill:state.fill,strset:state.strset,labels:state.labels,acc:state.acc,ckey:state.ckey,cmode:state.cmode,prog:state.prog}));}catch(e){}
 }
 
 const shape=()=>state.kind==='scale'?SCALES[state.scale]:CHORDS[state.chord];
@@ -897,11 +949,70 @@ function renderRead(){
     nd.style.opacity='0';
   }
 }
+/* Circle of fifths: pick a home key, then tap its chords to show them on the neck. */
+const COF=[0,7,2,9,4,11,6,1,8,3,10,5];
+const MAJ_NAMES=['C','G','D','A','E','B','F#','Db','Ab','Eb','Bb','F'];
+const MIN_NAMES=['Am','Em','Bm','F#m','C#m','G#m','D#m','Bbm','Fm','Cm','Gm','Dm'];
+const DIA={
+  maj:{off:[0,2,4,5,7,9,11],q:[0,1,1,0,0,1,5],num:['I','ii','iii','IV','V','vi','vii°'],scale:0,
+    prog:[['I–IV–V',[0,3,4]],['I–V–vi–IV',[0,4,5,3]],['ii–V–I',[1,4,0]],['I–vi–IV–V',[0,5,3,4]],['vi–IV–I–V',[5,3,0,4]]]},
+  min:{off:[0,2,3,5,7,8,10],q:[1,5,0,1,1,0,0],num:['i','ii°','III','iv','v','VI','VII'],scale:1,
+    prog:[['i–iv–v',[0,3,4]],['i–VI–III–VII',[0,5,2,6]],['ii°–v–i',[1,4,0]],['i–VI–VII',[0,5,6]],['i–iv–VII–III',[0,3,6,2]]]}
+};
+const cofAcc=()=>state.cmode==='maj'?([5,10,3,8,1].indexOf(state.ckey)>=0?'flat':'sharp'):([2,7,0,5,10].indexOf(state.ckey)>=0?'flat':'sharp');
+function diaChords(){
+  const d=DIA[state.cmode];
+  return d.off.map((o,i)=>({root:(state.ckey+o)%12,ci:d.q[i],num:d.num[i]}));
+}
+const cofLabel=c=>noteName(c.root,cofAcc())+CHORDS[c.ci].sym;
+function wedge(r0,r1,a0,a1){
+  const P=(r,a)=>(150+r*Math.sin(a)).toFixed(1)+' '+(150-r*Math.cos(a)).toFixed(1);
+  return 'M'+P(r1,a0)+' A'+r1+' '+r1+' 0 0 1 '+P(r1,a1)+' L'+P(r0,a1)+' A'+r0+' '+r0+' 0 0 0 '+P(r0,a0)+'Z';
+}
+function renderCof(){
+  const tonicMaj=state.cmode==='maj'?state.ckey:(state.ckey+3)%12, ti=COF.indexOf(tonicMaj);
+  const fam=new Set([ti,(ti+1)%12,(ti+11)%12]);
+  let h='';
+  for(let i=0;i<12;i++){
+    const a0=(i-0.5)*Math.PI/6, a1=(i+0.5)*Math.PI/6, am=i*Math.PI/6;
+    const T=(r)=>'x="'+(150+r*Math.sin(am)).toFixed(1)+'" y="'+(150-r*Math.cos(am)+5).toFixed(1)+'"';
+    const pm=COF[i], pn=(COF[i]+9)%12;
+    const sm=state.cmode==='maj'&&state.ckey===pm, sn=state.cmode==='min'&&state.ckey===pn;
+    h+='<g class="w'+(sm?' sel':fam.has(i)?' fam':'')+'" role="button" tabindex="0" data-pc="'+pm+'" data-m="maj" aria-pressed="'+sm+'" aria-label="'+MAJ_NAMES[i].replace('b',' flat').replace('#',' sharp')+' major"><path d="'+wedge(98,146,a0,a1)+'"/><text text-anchor="middle" '+T(122)+'>'+MAJ_NAMES[i]+'</text></g>';
+    h+='<g class="w min'+(sn?' sel':fam.has(i)?' fam':'')+'" role="button" tabindex="0" data-pc="'+pn+'" data-m="min" aria-pressed="'+sn+'" aria-label="'+MIN_NAMES[i].replace('m','').replace('b',' flat').replace('#',' sharp')+' minor"><path d="'+wedge(56,98,a0,a1)+'"/><text text-anchor="middle" '+T(78)+'>'+MIN_NAMES[i]+'</text></g>';
+  }
+  const nm=state.cmode==='maj'?MAJ_NAMES[ti]:MIN_NAMES[ti];
+  h+='<text class="ctr" text-anchor="middle" x="150" y="152">'+nm+'</text><text class="ctr2" text-anchor="middle" x="150" y="170">'+(state.cmode==='maj'?'major':'minor')+' key</text>';
+  $('cof').innerHTML=h;
+  const cs=diaChords();
+  const showing=c=>(state.kind==='chord'&&state.key===c.root&&state.chord===c.ci)||(state.kind==='caged'&&c.ci===0&&state.key===c.root);
+  $('dia').innerHTML=cs.map((c,i)=>'<button type="button" data-i="'+i+'" aria-pressed="'+showing(c)+'" aria-label="'+c.num.replace('°',' diminished')+', '+cofLabel(c)+'"><small>'+c.num+'</small>'+cofLabel(c)+'</button>').join('');
+  const kn=DIA[state.cmode].off.map(o=>noteName((state.ckey+o)%12,cofAcc()));
+  $('keynotelist').textContent=kn.join(' ');
+  const kon=state.kind==='scale'&&state.key===state.ckey&&state.scale===DIA[state.cmode].scale;
+  $('keynotes').setAttribute('aria-pressed',String(kon));
+  $('keynotes').textContent=kon?'Showing key notes':'Key notes on the neck';
+  const pr=DIA[state.cmode].prog;
+  $('pchips').innerHTML=pr.map((p,i)=>'<button type="button" data-p="'+i+'" aria-pressed="'+(i===state.prog)+'">'+p[0]+'</button>').join('');
+  if(state.prog>=0){
+    const steps=pr[state.prog][1];
+    if(state.pstep>=steps.length) state.pstep=0;
+    $('psteps').innerHTML=steps.map((d,i)=>{const c=cs[d]; return '<button type="button" data-s="'+i+'" aria-pressed="'+(i===state.pstep&&showing(c))+'" aria-label="Step '+(i+1)+', '+c.num.replace('°',' diminished')+', '+cofLabel(c)+'"><small>'+c.num+'</small>'+cofLabel(c)+'</button>';}).join('')+
+      '<button type="button" class="ghost" id="pnext">Next chord</button>';
+  }else $('psteps').innerHTML='';
+}
+function showDia(c){
+  state.key=c.root;
+  if(state.kind==='caged'&&c.ci===0){refresh(); return;}
+  state.kind='chord'; state.chord=c.ci;
+  if(state.strset!=='all'&&CHORDS[c.ci].iv.length!==3) state.strset='all';
+  renderShapeSelect(); refresh();
+}
 function renderAll(){
-  renderKeys(); renderShapeSelect(); renderTypes(); renderSegs(); renderNeck(); renderChips(); renderRead();
+  renderKeys(); renderShapeSelect(); renderTypes(); renderSegs(); renderNeck(); renderChips(); renderRead(); renderCof();
 }
 function refresh(){
-  renderKeys(); renderTypes(); renderSegs(); renderNeck(); renderChips(); renderRead(); save();
+  renderKeys(); renderTypes(); renderSegs(); renderNeck(); renderChips(); renderRead(); renderCof(); save();
 }
 function setChord(cd){
   const prev=state.chordDet;
@@ -922,6 +1033,31 @@ function setDet(d){
 $('keys').addEventListener('click',e=>{
   const b=e.target.closest('button'); if(!b) return;
   state.key=+b.dataset.k; refresh();
+});
+function pickCof(g){
+  state.ckey=+g.dataset.pc; state.cmode=g.dataset.m; state.pstep=0;
+  if(state.prog>=0&&state.prog>=DIA[state.cmode].prog.length) state.prog=-1;
+  /* Show the new key's notes so the choice is visible right away. */
+  state.key=state.ckey; state.kind='scale'; state.scale=DIA[state.cmode].scale; renderShapeSelect();
+  refresh();
+}
+$('cof').addEventListener('click',e=>{const g=e.target.closest('.w'); if(g) pickCof(g);});
+$('cof').addEventListener('keydown',e=>{if(e.key!=='Enter'&&e.key!==' ') return; const g=e.target.closest('.w'); if(g){e.preventDefault(); pickCof(g); const n=$('cof').querySelector('[data-pc="'+g.dataset.pc+'"][data-m="'+g.dataset.m+'"]'); if(n) n.focus();}});
+$('dia').addEventListener('click',e=>{const b=e.target.closest('button'); if(b) showDia(diaChords()[+b.dataset.i]);});
+$('keynotes').addEventListener('click',()=>{
+  state.key=state.ckey; state.kind='scale'; state.scale=DIA[state.cmode].scale; state.labels='degree';
+  renderShapeSelect(); refresh();
+});
+$('pchips').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  state.prog=+b.dataset.p; state.pstep=0;
+  showDia(diaChords()[DIA[state.cmode].prog[state.prog][1][0]]);
+});
+$('psteps').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b||state.prog<0) return;
+  const steps=DIA[state.cmode].prog[state.prog][1];
+  state.pstep=b.id==='pnext'?(state.pstep+1)%steps.length:+b.dataset.s;
+  showDia(diaChords()[steps[state.pstep]]);
 });
 $('kindseg').addEventListener('click',e=>{
   const b=e.target.closest('button'); if(!b) return;
