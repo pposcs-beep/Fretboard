@@ -185,6 +185,9 @@ select{min-height:44px;width:100%;padding:0 10px;border:1px solid var(--line);bo
 .cofside{display:grid;gap:12px;min-width:0}
 .dia,.nums{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
 .nums{margin-bottom:6px}
+.keyhead{display:block;font:700 17px/1.2 var(--f-display);color:var(--fg);text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:2px;margin-bottom:10px}
+.nums span{display:grid;gap:1px}
+.nums span i{font:600 11px var(--f-mono);font-style:normal;opacity:.8}
 .nums span{text-align:center;font:700 15px var(--f-display);padding:4px 0;border-radius:6px}
 .nums .q0{color:var(--accent)} .nums .q1{color:var(--root)} .nums .q5{color:var(--good)}
 .dia button{border-top-width:4px!important}
@@ -276,7 +279,7 @@ select{min-height:44px;width:100%;padding:0 10px;border:1px solid var(--line);bo
       <svg class="cofsvg" id="cof" viewBox="0 0 300 300" role="group" aria-label="Circle of fifths. Outer ring major keys, inner ring minor keys"></svg>
       <div class="cofside">
         <div>
-          <span class="lbl" id="dialbl">Chords in the key</span>
+          <span class="keyhead" id="dialbl">Chords in the Key</span>
           <div class="nums" id="nums" aria-hidden="true"></div>
           <div class="dia" id="dia" role="group" aria-labelledby="dialbl"></div>
         </div>
@@ -1049,7 +1052,7 @@ function renderCof(){
   $('cof').innerHTML=h;
   const cs=diaChords();
   const showing=c=>(state.kind==='chord'&&state.key===c.root&&state.chord===c.ci)||(state.kind==='caged'&&c.ci===0&&state.key===c.root);
-  $('nums').innerHTML=cs.map(c=>'<span class="q'+c.ci+'">'+c.num+'</span>').join('');
+  $('nums').innerHTML=cs.map((c,i)=>'<span class="q'+c.ci+'"><i>'+(i+1)+'</i>'+c.num+'</span>').join('');
   $('dia').innerHTML=cs.map((c,i)=>'<button type="button" class="q'+c.ci+'" data-i="'+i+'" aria-pressed="'+showing(c)+'" aria-label="'+c.num.replace('°',' diminished')+', '+cofLabel(c)+'">'+cofLabel(c)+'</button>').join('');
   [].forEach.call($('voiceseg').children,b=>b.setAttribute('aria-pressed',String(b.dataset.voice===state.voice)));
   const bh=$('barrehint'); if(barreOn()){bh.textContent=barreText(); bh.hidden=false;} else bh.hidden=true;
