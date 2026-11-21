@@ -101,6 +101,7 @@ select{min-height:44px;width:100%;padding:0 10px;border:1px solid var(--line);bo
 .zone.alt{fill-opacity:.07}
 .zone.faint{fill-opacity:.03;stroke-opacity:.25}
 .tag.faint{opacity:.35}
+.vgrp{margin-top:14px} .vgrp .seg{flex-wrap:wrap}
 .nshape{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:10px}
 .nshape .lbl{margin:0}
 .nshape .seg button{min-width:44px;padding:0 10px}
@@ -400,6 +401,17 @@ body.pnl-l .rail.l{left:calc(var(--dw) + 4px)} body.pnl-r .rail.r{right:calc(var
       <div class="seg" id="ksmode" role="group" aria-label="Major or minor key"><button type="button" data-m="maj">Major</button><button type="button" data-m="min">Minor</button></div>
     </div>
     <div class="kbox" id="kbox" role="group" aria-labelledby="kslbl"></div>
+    <div class="grp vgrp">
+          <span class="lbl" id="voicelbl">Show chords as</span>
+          <div class="seg" id="voiceseg" role="group" aria-labelledby="voicelbl">
+            <button type="button" data-voice="barre">Barre shapes</button><button type="button" data-voice="neck">Whole neck</button><button type="button" data-voice="triads">Triads</button>
+          </div>
+          <div class="nshape" id="nshapegrp" hidden>
+            <span class="lbl" id="nshapelbl">Shape</span>
+            <div class="seg" id="nshapeseg" role="group" aria-labelledby="nshapelbl"></div>
+            <button type="button" class="ghost" id="nnext">Next shape</button>
+          </div>
+        </div>
   </section>
 
   <section class="panel" aria-label="Notes in the selection">
@@ -417,17 +429,6 @@ body.pnl-l .rail.l{left:calc(var(--dw) + 4px)} body.pnl-r .rail.r{right:calc(var
           <span class="keyhead" id="dialbl">Chords in the Key</span>
           <div class="nums" id="nums" aria-hidden="true"></div>
           <div class="dia" id="dia" role="group" aria-labelledby="dialbl"></div>
-        </div>
-        <div class="grp">
-          <span class="lbl" id="voicelbl">Show chords as</span>
-          <div class="seg" id="voiceseg" role="group" aria-labelledby="voicelbl">
-            <button type="button" data-voice="barre">Barre shapes</button><button type="button" data-voice="neck">Whole neck</button><button type="button" data-voice="triads">Triads</button>
-          </div>
-          <div class="nshape" id="nshapegrp" hidden>
-            <span class="lbl" id="nshapelbl">Shape</span>
-            <div class="seg" id="nshapeseg" role="group" aria-labelledby="nshapelbl"></div>
-            <button type="button" class="ghost" id="nnext">Next shape</button>
-          </div>
         </div>
         <div class="btnrow">
           <button type="button" class="ghost" id="keynotes" aria-pressed="false">Key notes on the neck</button>
@@ -1321,7 +1322,7 @@ function showDia(c){
   state.key=c.root;
   if(state.kind==='caged'&&c.ci===0){refresh(); return;}
   state.kind='chord'; state.chord=c.ci;
-  if(state.voice!=='triads'||CHORDS[c.ci].iv.length!==3) state.strset='all';
+  if(state.voice!=='triads'||CHORDS[c.ci].iv.length!==3) state.strset='all'; else triSet();
   renderShapeSelect(); refresh();
 }
 function renderAll(){
@@ -1364,16 +1365,26 @@ function pickCof(g){
 }
 $('cof').addEventListener('click',e=>{const g=e.target.closest('.w'); if(g) pickCof(g);});
 $('cof').addEventListener('keydown',e=>{if(e.key!=='Enter'&&e.key!==' ') return; const g=e.target.closest('.w'); if(g){e.preventDefault(); pickCof(g); const n=$('cof').querySelector('[data-pc="'+g.dataset.pc+'"][data-m="'+g.dataset.m+'"]'); if(n) n.focus();}});
+/* These buttons only change how a chord is drawn, so if the neck is on a scale, switch it to the key's I chord first. */
+function toChord(){
+  if(state.kind==='chord') return;
+  const c=diaChords()[0]; state.key=c.root; state.kind='chord'; state.chord=c.ci; renderShapeSelect();
+}
+/* Triads need a string group; start on the top three strings. */
+function triSet(){ if(state.voice==='triads'&&state.strset==='all'&&state.kind==='chord'&&CHORDS[state.chord].iv.length===3) state.strset='gbe'; }
 $('voiceseg').addEventListener('click',e=>{
   const b=e.target.closest('button'); if(!b) return;
-  state.voice=b.dataset.voice; if(state.voice!=='triads') state.strset='all';
+  toChord();
+  state.voice=b.dataset.voice; if(state.voice!=='triads') state.strset='all'; else triSet();
   refresh();
 });
 $('nshapeseg').addEventListener('click',e=>{
   const b=e.target.closest('button'); if(!b) return;
+  toChord(); state.voice='neck'; state.strset='all';
   state.nshape=b.dataset.n; refresh();
 });
 $('nnext').addEventListener('click',()=>{
+  toChord(); state.voice='neck'; state.strset='all';
   const i=NECK_ORDER.indexOf(state.nshape);
   state.nshape=NECK_ORDER[(i+1)%NECK_ORDER.length]; refresh();
 });
