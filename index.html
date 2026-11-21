@@ -269,6 +269,54 @@ select{min-height:44px;width:100%;padding:0 10px;border:1px solid var(--line);bo
 .rmshare{margin:12px 0 0;font-size:15px}
 .rmshare b{color:var(--good)}
 @media (prefers-reduced-motion:reduce){.needle{transition:none}}
+
+/* Redesign: the neck and its controls stay on the page; everything else lives in drawers
+   that slide out from tabs on the left and right edges. On a phone the tabs sit along the bottom. */
+:root{--dw:min(420px,92vw);--railw:46px}
+body{padding-left:calc(max(16px,env(safe-area-inset-left,0px)) + var(--railw));padding-right:calc(max(16px,env(safe-area-inset-right,0px)) + var(--railw));transition:padding .25s ease}
+.rail{position:fixed;top:50%;transform:translateY(-50%);z-index:45;display:grid;gap:8px;transition:left .25s ease,right .25s ease}
+.rail.l{left:max(4px,env(safe-area-inset-left,0px))} .rail.r{right:max(4px,env(safe-area-inset-right,0px))}
+.rail button{writing-mode:vertical-rl;min-width:40px;min-height:112px;padding:12px 0;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:10px;font:600 14px var(--f-display);letter-spacing:.02em;cursor:pointer;box-shadow:0 2px 8px rgb(0 0 0 / .12);position:relative}
+.rail.l button{transform:rotate(180deg)}
+.rail button[aria-expanded="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.rail button.live::after{content:"";position:absolute;left:50%;top:-5px;width:9px;height:9px;margin-left:-4.5px;border-radius:50%;background:var(--good)}
+.rail.l button.live::after{top:auto;bottom:-5px}
+body.dl .rail.l{left:calc(var(--dw) + 4px)} body.dr .rail.r{right:calc(var(--dw) + 4px)}
+.drawer{position:fixed;top:0;bottom:0;width:var(--dw);z-index:44;margin:0;border-radius:0;overflow:auto;overscroll-behavior:contain;
+  padding:0 16px 40px;box-shadow:0 0 24px rgb(0 0 0 / .22);visibility:hidden;transition:transform .25s ease,visibility 0s linear .25s}
+.drawer[data-side="left"]{left:0;transform:translateX(-102%);padding-left:max(16px,env(safe-area-inset-left,0px));border-width:0 1px 0 0}
+.drawer[data-side="right"]{right:0;transform:translateX(102%);padding-right:max(16px,env(safe-area-inset-right,0px));border-width:0 0 0 1px}
+.drawer.open{transform:none;visibility:visible;transition:transform .25s ease,visibility 0s}
+.drawer>h2{display:none}
+.dbar{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--panel);padding:12px 0 10px;margin-bottom:6px;border-bottom:1px solid var(--line)}
+.dbar b{font:700 19px/1.2 var(--f-display)}
+.dbar button{min-height:44px;min-width:72px}
+.drawer .cof{grid-template-columns:1fr}
+.drawer .cofsvg{max-width:300px;justify-self:center}
+@media (min-width:1100px){body.dl{padding-left:calc(var(--dw) + var(--railw) + 16px)} body.dr{padding-right:calc(var(--dw) + var(--railw) + 16px)}}
+@media (max-width:639px){
+  body{padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px));padding-bottom:84px}
+  .rail{top:auto;transform:none;bottom:max(8px,env(safe-area-inset-bottom,0px));display:flex;gap:6px}
+  .rail.l{left:8px} .rail.r{right:8px}
+  body.dl .rail.l{left:8px} body.dr .rail.r{right:8px}
+  .rail button,.rail.l button{writing-mode:horizontal-tb;transform:none;min-height:44px;min-width:0;padding:0 10px;font-size:13px}
+  .drawer{--dw:100vw;bottom:68px}
+}
+@media (prefers-reduced-motion:reduce){.drawer,.rail,body{transition:none}}
+
+/* Chords in the key: always under the neck. */
+.kshead{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 14px;margin-bottom:10px}
+.kshead .keyhead{margin:0}
+.kbox{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.kbox button{min-height:84px;border:0;border-radius:10px;cursor:pointer;display:grid;place-content:center;justify-items:center;gap:2px;padding:6px 2px;-webkit-tap-highlight-color:transparent}
+.kbox i{font:700 13px var(--f-mono);font-style:normal;opacity:.85}
+.kbox span{font:700 22px/1 var(--f-display)}
+.kbox b{font:500 15px var(--f-mono)}
+.kbox .q0{background:var(--accent);color:var(--on-accent)}
+.kbox .q1{background:var(--root);color:var(--on-root)}
+.kbox .q5{background:var(--good);color:var(--on-good)}
+.kbox button[aria-pressed="true"]{outline:4px solid var(--fg);outline-offset:2px}
+@media (max-width:639px){.kbox{gap:4px}.kbox button{min-height:72px}.kbox span{font-size:17px}.kbox b{font-size:12px}}
 </style>
 </head>
 <body>
@@ -329,7 +377,21 @@ select{min-height:44px;width:100%;padding:0 10px;border:1px solid var(--line);bo
     <p class="hint">Tap any fret to hear that note and see whether it belongs.</p>
   </section>
 
-  <section class="panel" aria-label="Circle of fifths">
+  <section class="panel kstrip" aria-label="Chords in the key">
+    <div class="kshead">
+      <span class="keyhead" id="kslbl">Chords in the Key</span>
+      <div class="seg" id="ksmode" role="group" aria-label="Major or minor key"><button type="button" data-m="maj">Major</button><button type="button" data-m="min">Minor</button></div>
+    </div>
+    <div class="kbox" id="kbox" role="group" aria-labelledby="kslbl"></div>
+  </section>
+
+  <section class="panel" aria-label="Notes in the selection">
+    <h2 id="ntitle"></h2>
+    <div class="chips" id="chips"></div>
+  </section>
+
+  <section class="panel drawer" id="d-cof" data-side="left" aria-label="Circle of fifths">
+    <div class="dbar"><b>Circle of 5ths</b><button type="button" class="ghost dclose" data-d="d-cof">Done</button></div>
     <h2>Circle of fifths</h2>
     <div class="cof">
       <svg class="cofsvg" id="cof" viewBox="0 0 300 300" role="group" aria-label="Circle of fifths. Outer ring major keys, inner ring minor keys"></svg>
@@ -364,7 +426,8 @@ select{min-height:44px;width:100%;padding:0 10px;border:1px solid var(--line);bo
     </div>
   </section>
 
-  <section class="panel" aria-label="Scales and relative minor">
+  <section class="panel drawer" id="d-scales" data-side="left" aria-label="Scales and relative minor">
+    <div class="dbar"><b>Scales</b><button type="button" class="ghost dclose" data-d="d-scales">Done</button></div>
     <h2>Scales &amp; Relative Minor</h2>
     <p class="rmhead" id="rmhead"></p>
     <div class="rmgrid">
@@ -377,10 +440,11 @@ select{min-height:44px;width:100%;padding:0 10px;border:1px solid var(--line);bo
       <button type="button" class="ghost" id="rmnext">Next box</button>
     </div>
     <p class="rmshare" id="rmshare"></p>
-    <p class="hint">Tap a scale to light it up on the neck, then pick Whole neck or one box at a time. Play runs the scale up an octave and back down; tap it again to stop. The key follows the circle of fifths above.</p>
+    <p class="hint">Tap a scale to light it up on the neck, then pick Whole neck or one box at a time. Play runs the scale up an octave and back down; tap it again to stop. The key follows the key you pick at the top or on the circle of fifths.</p>
   </section>
 
-  <section class="panel" aria-label="My Songs">
+  <section class="panel drawer" id="d-songs" data-side="left" aria-label="My Songs">
+    <div class="dbar"><b>My Songs</b><button type="button" class="ghost dclose" data-d="d-songs">Done</button></div>
     <h2>My Songs</h2>
     <div class="slist" id="slist" role="group" aria-label="Songs"></div>
     <div class="sedit" id="sedit" hidden>
@@ -418,7 +482,8 @@ select{min-height:44px;width:100%;padding:0 10px;border:1px solid var(--line);bo
     </div>
   </div>
 
-  <section class="panel" aria-label="Listen">
+  <section class="panel drawer" id="d-listen" data-side="right" aria-label="Listen">
+    <div class="dbar"><b>Listen</b><button type="button" class="ghost dclose" data-d="d-listen">Done</button></div>
     <div class="lhead">
       <button type="button" class="primary" id="listen" aria-pressed="false">Listen</button>
       <label class="chk"><input type="checkbox" id="snd" checked> Sound on tap</label>
@@ -439,7 +504,8 @@ select{min-height:44px;width:100%;padding:0 10px;border:1px solid var(--line);bo
     <p class="hint">Play one note to see where it sits, or strum a chord and let it ring to see its name and its notes lit in green. Chord naming is best on clean major, minor and sus chords; 7ths, 6ths and add9 are less sure.</p>
   </section>
 
-  <section class="panel" aria-label="Play along with a song">
+  <section class="panel drawer" id="d-play" data-side="right" aria-label="Play along with a song">
+    <div class="dbar"><b>Play Along</b><button type="button" class="ghost dclose" data-d="d-play">Done</button></div>
     <h2>Play along with a song</h2>
     <div class="lhead">
       <label class="primary filebtn">Choose a song<input type="file" id="songfile" class="vh" accept="audio/*,.mp3,.m4a,.wav,.aac"></label>
@@ -501,10 +567,15 @@ select{min-height:44px;width:100%;padding:0 10px;border:1px solid var(--line);bo
     <p class="hint">The song stays on this device and is never uploaded. Chord names are a best guess from the whole mix, so expect some wrong or missed chords, more so with heavy drums, effects or busy arrangements. Reduce vocals works on songs with the voice in the middle of a stereo mix, and it also thins out anything else in the middle.</p>
   </section>
 
-  <section class="panel" aria-label="Notes in the selection">
-    <h2 id="ntitle"></h2>
-    <div class="chips" id="chips"></div>
-  </section>
+  <nav class="rail l" aria-label="Tools">
+    <button type="button" id="t-cof" data-d="d-cof" aria-controls="d-cof" aria-expanded="false">Circle of 5ths</button>
+    <button type="button" id="t-scales" data-d="d-scales" aria-controls="d-scales" aria-expanded="false">Scales</button>
+    <button type="button" id="t-songs" data-d="d-songs" aria-controls="d-songs" aria-expanded="false">My Songs</button>
+  </nav>
+  <nav class="rail r" aria-label="Listen and play along">
+    <button type="button" id="t-listen" data-d="d-listen" aria-controls="d-listen" aria-expanded="false">Listen</button>
+    <button type="button" id="t-play" data-d="d-play" aria-controls="d-play" aria-expanded="false">Play Along</button>
+  </nav>
 </main>
 
 <script>
@@ -1205,6 +1276,7 @@ function renderCof(){
   const cs=diaChords();
   const showing=c=>(state.kind==='chord'&&state.key===c.root&&state.chord===c.ci)||(state.kind==='caged'&&c.ci===0&&state.key===c.root);
   $('nums').innerHTML=cs.map((c,i)=>'<span class="q'+c.ci+'"><i>'+(i+1)+'</i>'+c.num+'</span>').join('');
+  renderStrip(cs);
   $('dia').innerHTML=cs.map((c,i)=>'<button type="button" class="q'+c.ci+'" data-i="'+i+'" aria-pressed="'+showing(c)+'" aria-label="'+c.num.replace('°',' diminished')+', '+cofLabel(c)+'">'+cofLabel(c)+'</button>').join('');
   [].forEach.call($('voiceseg').children,b=>b.setAttribute('aria-pressed',String(b.dataset.voice===state.voice)));
   const bh=$('barrehint'); if(barreOn()){bh.textContent=barreText(); bh.hidden=false;} else if(neckOn()){bh.textContent=neckText(); bh.hidden=false;} else bh.hidden=true;
@@ -1256,7 +1328,8 @@ function setDet(d){
 /* Controls */
 $('keys').addEventListener('click',e=>{
   const b=e.target.closest('button'); if(!b) return;
-  state.key=+b.dataset.k; refresh();
+  /* Picking a key at the top also sets the key for the chord strip, circle and scales. */
+  state.key=+b.dataset.k; state.ckey=state.key; state.pstep=0; refresh();
 });
 function pickCof(g){
   state.ckey=+g.dataset.pc; state.cmode=g.dataset.m; state.pstep=0;
@@ -2085,6 +2158,7 @@ function showCardChord(e){
   if(state.voice==='triads') state.voice='barre';
   renderShapeSelect(); refresh();
   if(!$('refr').hidden) closeRef();
+  if(narrow()) setDrawer(null);
   const n=$('neck'); if(n&&n.scrollIntoView) n.scrollIntoView({behavior:'smooth',block:'center'});
 }
 $('scards').addEventListener('click',showCardChord);
@@ -2159,6 +2233,53 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('refr').hidden) 
 if(songs.sel&&!curSong()) songs.sel=songs.list.length?songs.list[0].id:null;
 renderSongs();
 
+
+/* ---- Chords in the key strip (always under the neck) ---- */
+function renderStrip(cs){
+  const show=c=>state.kind==='chord'&&state.key===c.root&&state.chord===c.ci;
+  $('kslbl').textContent='Chords in '+noteName(state.ckey,cofAcc())+(state.cmode==='maj'?' major':' minor');
+  $('kbox').innerHTML=cs.map((c,i)=>'<button type="button" class="q'+c.ci+'" data-i="'+i+'" aria-pressed="'+show(c)+'" aria-label="'+(i+1)+', '+c.num.replace('°',' diminished')+', '+cofLabel(c)+'"><i>'+(i+1)+'</i><span>'+c.num+'</span><b>'+cofLabel(c)+'</b></button>').join('');
+  [...$('ksmode').children].forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.m===state.cmode)));
+}
+$('kbox').addEventListener('click',e=>{const b=e.target.closest('button'); if(b) showDia(diaChords()[+b.dataset.i]);});
+$('ksmode').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b||b.dataset.m===state.cmode) return;
+  state.cmode=b.dataset.m; state.pstep=0;
+  if(state.prog>=DIA[state.cmode].prog.length) state.prog=-1;
+  renderCof(); save();
+});
+
+/* ---- Side drawers ---- */
+const DRAWERS=['d-cof','d-scales','d-songs','d-listen','d-play'];
+let openD=null;
+function setDrawer(id){
+  if(id===openD) id=null;
+  DRAWERS.forEach(d=>{
+    const el=$(d), on=d===id; el.classList.toggle('open',on);
+    $('t-'+d.slice(2)).setAttribute('aria-expanded',String(on));
+  });
+  const side=id?$(id).dataset.side:null;
+  document.body.classList.toggle('dl',side==='left'); document.body.classList.toggle('dr',side==='right');
+  openD=id;
+  if(id){const el=$(id); if(el.focus){el.setAttribute('tabindex','-1'); try{el.focus({preventScroll:true});}catch(e){}}}
+}
+DRAWERS.forEach(d=>{
+  $('t-'+d.slice(2)).addEventListener('click',()=>setDrawer(d));
+  $(d).addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('.dclose'); if(b){const t=$('t-'+d.slice(2)); setDrawer(null); if(t.focus) t.focus();}});
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&openD&&$('refr').hidden){const t=$('t-'+openD.slice(2)); setDrawer(null); if(t.focus) t.focus();}});
+/* A dot on Listen and Play Along while they're running, so you can see that with the drawer shut. */
+function markLive(){
+  $('t-listen').classList.toggle('live',!!state.listening);
+  const sp=$('songplay'); $('t-play').classList.toggle('live',!!sp&&/pause/i.test(sp.textContent||''));
+}
+if(typeof MutationObserver!=='undefined'){
+  const mo=new MutationObserver(markLive);
+  mo.observe($('listen'),{attributes:true,attributeFilter:['aria-pressed']});
+  mo.observe($('songplay'),{childList:true,characterData:true,subtree:true});
+}
+/* On a phone the drawer covers the neck, so close it when a tap should show something on the neck. */
+const narrow=()=>typeof window.matchMedia==='function'&&window.matchMedia('(max-width:639px)').matches;
 renderAll();
 })();
 </script>
