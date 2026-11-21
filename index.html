@@ -338,6 +338,16 @@ body.pnl-l .rail.l{left:calc(var(--dw) + 4px)} body.pnl-r .rail.r{right:calc(var
 </style>
 </head>
 <body>
+<script>
+/* If the page script stops on this device, show a way out instead of a blank page. Reset clears only the saved view, never songs or tabs. */
+(function(){var shown=false;window.addEventListener('error',function(e){if(shown||!e||!e.message) return; shown=true;
+var d=document.createElement('div');d.setAttribute('role','alert');
+d.style.cssText='position:fixed;left:12px;right:12px;top:12px;z-index:9999;background:#fff;color:#111;border:2px solid #C2255C;border-radius:12px;padding:14px;font:16px/1.4 system-ui,sans-serif;box-shadow:0 6px 24px rgb(0 0 0 / .25)';
+d.innerHTML='<b>The page didn\'t finish loading on this device.</b><br>Tap Reset to clear the saved view and try again. Your songs and tabs stay.<br><button type="button" style="margin-top:10px;font:inherit;padding:10px 16px;border-radius:10px;border:0;background:#C2255C;color:#fff">Reset</button>';
+d.querySelector('button').onclick=function(){try{localStorage.removeItem('fv-state-1');sessionStorage.removeItem('fv-reset');}catch(_){}location.reload();};
+(document.body||document.documentElement).appendChild(d);});})();
+</script>
+
 
 <main class="wrap">
   <header>
@@ -2318,7 +2328,11 @@ if(typeof MutationObserver!=='undefined'){
 /* On a phone the drawer covers the neck, so close it when a tap should show something on the neck. */
 function coversPage(){return typeof window.matchMedia==='function'&&window.matchMedia('(max-width:1099px)').matches;}
 const narrow=()=>typeof window.matchMedia==='function'&&window.matchMedia('(max-width:639px)').matches;
-renderAll();
+/* A saved view that breaks on this device shouldn't leave a blank page: clear it and load once more. */
+try{renderAll(); try{sessionStorage.removeItem('fv-reset');}catch(_){}}
+catch(err){let again=false; try{again=sessionStorage.getItem('fv-reset')==='1';}catch(_){}
+  if(!again){try{sessionStorage.setItem('fv-reset','1'); localStorage.removeItem(STORE);}catch(_){} location.reload(); return;}
+  throw err;}
 })();
 </script>
 
