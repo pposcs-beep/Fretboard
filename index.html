@@ -281,7 +281,7 @@ body{padding-left:calc(max(16px,env(safe-area-inset-left,0px)) + var(--railw));p
 .rail button[aria-expanded="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 .rail button.live::after{content:"";position:absolute;left:50%;top:-5px;width:9px;height:9px;margin-left:-4.5px;border-radius:50%;background:var(--good)}
 .rail.l button.live::after{top:auto;bottom:-5px}
-body.dl .rail.l{left:calc(var(--dw) + 4px)} body.dr .rail.r{right:calc(var(--dw) + 4px)}
+body.pnl-l .rail.l{left:calc(var(--dw) + 4px)} body.pnl-r .rail.r{right:calc(var(--dw) + 4px)}
 .drawer{position:fixed;top:0;bottom:0;width:var(--dw);z-index:44;margin:0;border-radius:0;overflow:auto;overscroll-behavior:contain;
   padding:0 16px 40px;box-shadow:0 0 24px rgb(0 0 0 / .22);visibility:hidden;transition:transform .25s ease,visibility 0s linear .25s}
 .drawer[data-side="left"]{left:0;transform:translateX(-102%);padding-left:max(16px,env(safe-area-inset-left,0px));border-width:0 1px 0 0}
@@ -291,16 +291,32 @@ body.dl .rail.l{left:calc(var(--dw) + 4px)} body.dr .rail.r{right:calc(var(--dw)
 .dbar{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--panel);padding:12px 0 10px;margin-bottom:6px;border-bottom:1px solid var(--line)}
 .dbar b{font:700 19px/1.2 var(--f-display)}
 .dbar button{min-height:44px;min-width:72px}
+
+/* Each panel has its own color: the tab, the panel's header bar and its edge. */
+#t-cof,#d-cof{--pc:#5B3FD9;--on-pc:#FFFFFF}
+#t-scales,#d-scales{--pc:#0B7A6E;--on-pc:#FFFFFF}
+#t-songs,#d-songs{--pc:#C2255C;--on-pc:#FFFFFF}
+#t-listen,#d-listen{--pc:#E8890C;--on-pc:#1F1300}
+#t-play,#d-play{--pc:#1864AB;--on-pc:#FFFFFF}
+.rail button{background:var(--pc);border-color:var(--pc);color:var(--on-pc);font-weight:700}
+.rail button[aria-expanded="true"]{background:var(--pc);border-color:var(--fg);color:var(--on-pc);box-shadow:0 0 0 3px var(--bg),0 0 0 5px var(--pc),0 4px 12px rgb(0 0 0 / .25)}
+.rail button.live::after{background:var(--good);box-shadow:0 0 0 2px var(--bg)}
+.drawer[data-side="left"]{border-right:5px solid var(--pc)} .drawer[data-side="right"]{border-left:5px solid var(--pc)}
+.dbar{background:var(--pc);color:var(--on-pc);border-bottom:0;margin:0 -16px 12px;padding:max(12px,env(safe-area-inset-top,0px)) 16px 12px}
+.dbar b{font-size:20px}
+.dbar button.dclose{background:var(--on-pc);color:var(--pc);border:0;font-weight:700;min-width:84px}
+#d-scales,#d-songs,#d-play{--accent:var(--pc);--on-accent:var(--on-pc)}
+.scrim{position:fixed;inset:0;z-index:43;background:rgb(0 0 0 / .35)}
 .drawer .cof{grid-template-columns:1fr}
 .drawer .cofsvg{max-width:300px;justify-self:center}
-@media (min-width:1100px){body.dl{padding-left:calc(var(--dw) + var(--railw) + 16px)} body.dr{padding-right:calc(var(--dw) + var(--railw) + 16px)}}
+@media (min-width:1100px){body.pnl-l{padding-left:calc(var(--dw) + var(--railw) + 16px)} body.pnl-r{padding-right:calc(var(--dw) + var(--railw) + 16px)} .scrim{display:none!important}}
 @media (max-width:639px){
   body{padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px));padding-bottom:84px}
   .rail{top:auto;transform:none;bottom:max(8px,env(safe-area-inset-bottom,0px));display:flex;gap:6px}
   .rail.l{left:8px} .rail.r{right:8px}
-  body.dl .rail.l{left:8px} body.dr .rail.r{right:8px}
+  body.pnl-l .rail.l{left:8px} body.pnl-r .rail.r{right:8px}
   .rail button,.rail.l button{writing-mode:horizontal-tb;transform:none;min-height:44px;min-width:0;padding:0 10px;font-size:13px}
-  .drawer{--dw:100vw;bottom:68px}
+  .drawer{--dw:88vw;bottom:calc(68px + env(safe-area-inset-bottom,0px))}
 }
 @media (prefers-reduced-motion:reduce){.drawer,.rail,body{transition:none}}
 
@@ -567,6 +583,7 @@ body.dl .rail.l{left:calc(var(--dw) + 4px)} body.dr .rail.r{right:calc(var(--dw)
     <p class="hint">The song stays on this device and is never uploaded. Chord names are a best guess from the whole mix, so expect some wrong or missed chords, more so with heavy drums, effects or busy arrangements. Reduce vocals works on songs with the voice in the middle of a stereo mix, and it also thins out anything else in the middle.</p>
   </section>
 
+  <div class="scrim" id="scrim" hidden></div>
   <nav class="rail l" aria-label="Tools">
     <button type="button" id="t-cof" data-d="d-cof" aria-controls="d-cof" aria-expanded="false">Circle of 5ths</button>
     <button type="button" id="t-scales" data-d="d-scales" aria-controls="d-scales" aria-expanded="false">Scales</button>
@@ -2259,10 +2276,12 @@ function setDrawer(id){
     $('t-'+d.slice(2)).setAttribute('aria-expanded',String(on));
   });
   const side=id?$(id).dataset.side:null;
-  document.body.classList.toggle('dl',side==='left'); document.body.classList.toggle('dr',side==='right');
+  /* Class names pnl-l and pnl-r: 'dl' is already the neck's label class (pointer-events:none), which froze the page. */
+  document.body.classList.toggle('pnl-l',side==='left'); document.body.classList.toggle('pnl-r',side==='right');
+  $('scrim').hidden=!id;
   openD=id;
-  if(id){const el=$(id); if(el.focus){el.setAttribute('tabindex','-1'); try{el.focus({preventScroll:true});}catch(e){}}}
 }
+$('scrim').addEventListener('click',()=>setDrawer(null));
 DRAWERS.forEach(d=>{
   $('t-'+d.slice(2)).addEventListener('click',()=>setDrawer(d));
   $(d).addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('.dclose'); if(b){const t=$('t-'+d.slice(2)); setDrawer(null); if(t.focus) t.focus();}});
