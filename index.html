@@ -438,7 +438,7 @@ body.pnl-l .rail.l{left:calc(var(--dw) + 4px)} body.pnl-r .rail.r{right:calc(var
           <div class="pchips" id="pchips" role="group" aria-label="Progressions"></div>
           <div class="psteps" id="psteps" role="group" aria-label="Progression chords"></div>
         </details>
-        <p class="hint">Tap a key on the circle, then tap a chord to see it on the neck. The shaded keys next to yours are its closest relatives: the IV and V on the outside, the minor chords on the inside.</p>
+        <p class="hint">Tap a key on the circle and the whole page changes to it; on a phone or iPad held upright the panel closes so you can see it. The shaded keys next to yours are its closest relatives: the IV and V on the outside, the minor chords on the inside.</p>
       </div>
     </div>
   </section>
@@ -1355,6 +1355,8 @@ function pickCof(g){
   state.ckey=+g.dataset.pc; state.cmode=g.dataset.m; state.pstep=0;
   if(state.prog>=0&&state.prog>=DIA[state.cmode].prog.length) state.prog=-1;
   /* Show the new key's notes so the choice is visible right away. */
+  /* Spell the page the way the key is written, so Eb on the circle reads Eb at the top, not D#. */
+  state.acc=cofAcc();
   state.key=state.ckey; state.kind='scale'; state.scale=DIA[state.cmode].scale; renderShapeSelect();
   refresh();
   /* Where the panel covers the page, close it so the new key shows on the page right away. */
