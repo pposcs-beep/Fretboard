@@ -370,6 +370,11 @@ body.pnl-w{--dw:min(600px,96vw)}
 .pheard{margin:0;font:600 15px var(--f-body);min-height:1.3em}
 .pheard.in{color:var(--accent)} .pheard.near{color:#B7860B} .pheard.out{color:var(--bad)}
 .pscore{margin:0;font-size:13px;color:var(--muted)}
+.pint{display:grid;gap:10px;margin:12px 0 4px;justify-items:start}
+.pirow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pinterval{margin:0;font:600 16px var(--f-body);min-height:1.35em;color:var(--accent)}
+.pneck .pring.proot{stroke:#E8655A;filter:drop-shadow(0 0 6px #E8655A)}
+.sub .ver{opacity:.6;white-space:nowrap}
 @media (max-width:639px){
   .rail button .lg{display:none} .rail button .sm{display:inline}
   .rail button,.rail.l button{padding:0 9px}
@@ -407,7 +412,7 @@ d.querySelector('button').onclick=function(){try{localStorage.removeItem('fv-sta
 <main class="wrap">
   <header>
     <h1>Fretboard Visualizer</h1>
-    <p class="sub">Standard tuning, E A D G B e. Frets 0 to 15.</p>
+    <p class="sub">Standard tuning, E A D G B e. Frets 0 to 15. <span class="ver">Version 22</span></p>
   </header>
 
   <section class="panel" aria-label="Key and shape">
@@ -537,6 +542,12 @@ d.querySelector('button').onclick=function(){try{localStorage.removeItem('fv-sta
       <div class="pneckwrap"><svg id="pneck" class="pneck" role="img" xmlns="http://www.w3.org/2000/svg"></svg></div>
       <div class="pshapes" id="pshapes" role="group" aria-label="CAGED scale shapes"></div>
       <p class="pcap">CAGED scale shapes</p>
+    </div>
+    <div class="pint">
+      <div class="pirow"><span class="lbl">Dots show</span><div class="seg" id="plab" role="group" aria-label="Dots show"><button type="button" data-v="note">Notes</button><button type="button" data-v="int">Intervals</button></div></div>
+      <div class="pirow"><span class="lbl">Tap a dot to hear</span><div class="seg" id="ptap" role="group" aria-label="Tap a dot to hear"><button type="button" data-v="note">The note</button><button type="button" data-v="int">Root, then the note</button></div></div>
+      <label class="chk" id="ptogl"><input type="checkbox" id="ptog"> Then play both together</label>
+      <p class="pinterval" id="pintv" aria-live="polite"></p>
     </div>
     <p class="pdesc" id="pdesc"></p>
     <div class="pcard ptabcard">
@@ -1952,8 +1963,18 @@ function gtrOut(c){
   const body=c.createBiquadFilter(); body.type='peaking'; body.frequency.value=210; body.Q.value=1.1; body.gain.value=3;
   const air=c.createBiquadFilter(); air.type='peaking'; air.frequency.value=2600; air.Q.value=0.9; air.gain.value=2;
   const lp=c.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=5200; lp.Q.value=0.5;
-  const v=c.createGain(); v.gain.value=0.9;
+  const v=c.createGain(); v.gain.value=0.8;
   hp.connect(body); body.connect(air); air.connect(lp); lp.connect(v); v.connect(c.destination);
+  /* A short wooden-body ring under the string: a few low resonances, mixed in quietly. */
+  try{
+    const sr=c.sampleRate, n=Math.floor(sr*0.16), ir=c.createBuffer(1,n,sr), d=ir.getChannelData(0);
+    const modes=[[102,0.06,1],[196,0.05,0.8],[240,0.04,0.6],[390,0.03,0.45],[520,0.025,0.35],[1100,0.012,0.2],[2300,0.006,0.12]];
+    for(let k=0;k<n;k++){const t=k/sr; let x=(Math.random()*2-1)*0.25*Math.exp(-t/0.004); modes.forEach(q=>{x+=q[2]*Math.sin(2*Math.PI*q[0]*t)*Math.exp(-t/q[1]);}); d[k]=x;}
+    let e=0; for(let k=0;k<n;k++) e+=d[k]*d[k]; const g=1/Math.sqrt(e||1); for(let k=0;k<n;k++) d[k]*=g;
+    const cv=c.createConvolver(); cv.normalize=false; cv.buffer=ir;
+    const w=c.createGain(); w.gain.value=0.35;
+    lp.connect(cv); cv.connect(w); w.connect(c.destination);
+  }catch(e){}
   gtrBus=hp; return gtrBus;
 }
 /* Play one guitar note at time `when`. o.vol loudness, o.dur cuts it short, o.from slides in from another note. */
@@ -2545,17 +2566,20 @@ $('ksmode').addEventListener('click',e=>{
 /* ---- Side drawers ---- */
 /* ---------- Pentatonic shapes panel: CAGED boxes, joined outlines, a lick, and lead listening ---------- */
 const PSTORE='fv-penta-1';
-const pst={mode:state.cmode==='min'?'min':'maj',sel:[],bpm:90,loop:false};
+const pst={mode:state.cmode==='min'?'min':'maj',sel:[],bpm:90,loop:false,lab:state.labels==='degree'?'int':'note',tap:'int',tog:false};
 try{const v=JSON.parse(localStorage.getItem(PSTORE)||'null'); if(v){
   if(v.mode==='min'||v.mode==='maj') pst.mode=v.mode;
   if(Array.isArray(v.sel)) pst.sel=v.sel.filter(x=>P_LET.indexOf(x)>=0);
   if([60,75,90,110,130].indexOf(v.bpm)>=0) pst.bpm=v.bpm;
   pst.loop=!!v.loop;
+  if(v.lab==='note'||v.lab==='int') pst.lab=v.lab;
+  if(v.tap==='note'||v.tap==='int') pst.tap=v.tap;
+  pst.tog=!!v.tog;
 }}catch(e){}
-function pSave(){try{localStorage.setItem(PSTORE,JSON.stringify({mode:pst.mode,sel:pst.sel,bpm:pst.bpm,loop:pst.loop}));}catch(e){}}
+function pSave(){try{localStorage.setItem(PSTORE,JSON.stringify({mode:pst.mode,sel:pst.sel,bpm:pst.bpm,loop:pst.loop,lab:pst.lab,tap:pst.tap,tog:pst.tog}));}catch(e){}}
 const PCW=48, PRH=34, PLM=30, PTOP=22;
 let pv={boxes:[],picked:[],chains:[],lick:[],lo:0,hi:PF,cells:new Set(),scale:new Set()};
-let pPlay=null, pNow=-1, pTrail=[], pLast=null, pScore={inn:0,out:0};
+let pPlay=null, pNow=-1, pTrail=[], pLast=null, pScore={inn:0,out:0}, pIv=null;
 const pX=(f)=>PLM+(f-pv.lo+0.5)*PCW, pY=s=>PTOP+s*PRH;
 function pKeyName(){return noteName(state.key,state.acc);}
 function pCompute(){
@@ -2599,7 +2623,7 @@ function pOutline(rows){
 }
 function pLabel(m){
   const i=((m-state.key)%12+12)%12;
-  return state.labels==='degree'?DEG[i]:noteName(m%12,state.acc);
+  return pst.lab==='int'?(i?DEG[i]:'R'):noteName(m%12,state.acc);
 }
 function renderPNeck(){
   const n=pv.hi-pv.lo+1, W=PLM+n*PCW+8, H=PTOP+5*PRH+40;
@@ -2621,13 +2645,13 @@ function renderPNeck(){
     const root=m%12===state.key, inb=!pv.picked.length||pv.cells.has(s+','+f);
     p.push('<g class="pdot'+(root?' root':'')+(inb?'':' dim')+'" data-s="'+s+'" data-f="'+f+'" id="pd-'+s+'-'+f+'"><circle cx="'+pX(f)+'" cy="'+pY(s)+'" r="14"/><text x="'+pX(f)+'" y="'+pY(s)+'">'+pLabel(m)+'</text></g>');
   }
-  p.push('<g id="phear"></g><g id="pcur"></g>');
+  p.push('<g id="phear"></g><g id="pcur"></g><g id="pivg"></g>');
   const svg=$('pneck');
   svg.setAttribute('viewBox','0 0 '+W+' '+H);
   svg.style.minWidth=Math.round(W*0.68)+'px';
   svg.setAttribute('aria-label',pTitle()+' on frets '+pv.lo+' to '+pv.hi+(pv.picked.length?', '+pv.picked.map(b=>b.name).join(' and ')+' shape outlined':''));
   svg.innerHTML=p.join('');
-  renderPHear(); renderPCur();
+  renderPHear(); renderPCur(); renderPIv();
 }
 function pTitle(){return pKeyName()+(pst.mode==='min'?' Minor':' Major')+' Pentatonic';}
 function renderPTab(){
@@ -2665,7 +2689,10 @@ function renderPSel(){
     P_ORDER.map(L=>'<button type="button" data-l="'+L+'" aria-pressed="'+(pst.sel.indexOf(L)>=0)+'" aria-label="'+L+' shape">'+L+'</button>').join('');
   $('pmode').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.m===pst.mode)));
   $('pkeys').querySelectorAll('button').forEach(b=>{b.textContent=noteName(+b.dataset.k,state.acc); b.setAttribute('aria-pressed',String(+b.dataset.k===state.key));});
-  $('pbpm').value=String(pst.bpm); $('ploop').checked=pst.loop;
+  $('pbpm').value=String(pst.bpm); $('ploop').checked=pst.loop; $('ptog').checked=pst.tog;
+  $('plab').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===pst.lab)));
+  $('ptap').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===pst.tap)));
+  $('ptogl').hidden=pst.tap!=='int';
   const ch=pv.chains, desc=!pst.sel.length?'Full neck: every note of the scale. Pick a shape to outline it.':
     ch.map(c=>c.map(b=>b.name).join(' + ')+' shape'+(c.length>1?'s joined':'')+', frets '+Math.min.apply(null,c.map(b=>b.lo))+' to '+Math.max.apply(null,c.map(b=>b.hi))).join('; ')+'.';
   $('pdesc').textContent=desc;
@@ -2771,9 +2798,58 @@ $('pbpm').addEventListener('change',e=>{pst.bpm=+e.target.value; pSave(); if(pPl
 $('ploop').addEventListener('change',e=>{pst.loop=e.target.checked; pSave();});
 $('pneck').addEventListener('click',e=>{
   const g=e.target.closest&&e.target.closest('.pdot'); if(!g) return;
-  const m=OPEN[+g.dataset.s]+(+g.dataset.f);
-  unlockAudio(); pluck(m);
+  unlockAudio(); pTap(+g.dataset.s,+g.dataset.f);
 });
+$('plab').addEventListener('click',e=>{const b=e.target.closest('button'); if(!b) return; pst.lab=b.dataset.v; pSave(); renderPenta();});
+$('ptap').addEventListener('click',e=>{const b=e.target.closest('button'); if(!b) return; pst.tap=b.dataset.v; pSave(); pIvStop(); pIv=null; renderPSel(); renderPIv();});
+$('ptog').addEventListener('change',e=>{pst.tog=e.target.checked; pSave();});
+const IVN=['octave','minor 2nd','major 2nd','minor 3rd','major 3rd','perfect 4th','tritone','perfect 5th','minor 6th','major 6th','minor 7th','major 7th'];
+/* Where to show the root on the diagram: a root dot inside the outlined shape first, then the one nearest the tapped note. */
+function pRootSpot(rm,s0,f0){
+  let best=null, bs=1e9;
+  for(let s=0;s<6;s++){
+    const f=rm-OPEN[s]; if(f<0||f>PF||f<pv.lo||f>pv.hi) continue;
+    const sc=(pv.picked.length&&!pv.cells.has(s+','+f)?20:0)+Math.abs(f-f0)+Math.abs(s-s0)*0.6;
+    if(sc<bs){bs=sc; best={s:s,f:f};}
+  }
+  return best;
+}
+function pIvStop(){if(pIv){(pIv.srcs||[]).forEach(o=>{try{o.stop();}catch(e){}}); (pIv.timers||[]).forEach(clearTimeout); pIv.srcs=[]; pIv.timers=[];}}
+function renderPIv(){
+  const g=$('pivg'), t=$('pintv'); if(!g||!t) return;
+  if(!pIv){g.innerHTML=''; t.textContent=pst.tap==='int'?'Tap any dot: you hear the root, then that note, and see the interval.':''; return;}
+  let h='';
+  if(pIv.root&&pIv.lit!=='note') h+='<circle class="pring proot" cx="'+pX(pIv.root.f)+'" cy="'+pY(pIv.root.s)+'" r="19"/>';
+  if(pIv.lit!=='root') h+='<circle class="pring" cx="'+pX(pIv.f)+'" cy="'+pY(pIv.s)+'" r="19"/>';
+  g.innerHTML=pIv.lit?h:'';
+  t.textContent=pIv.text;
+}
+function pTap(s,f){
+  const m=OPEN[s]+f;
+  if(pst.tap!=='int'){pluck(m); return;}
+  pIvStop();
+  const i=((m-state.key)%12+12)%12;
+  let rm=m-(i||12), up=true;
+  if(rm<OPEN[5]){rm=m+(12-i); up=false;}
+  const semis=Math.abs(m-rm), name=IVN[semis%12]||'octave', kn=pKeyName(), nn=noteName(m%12,state.acc);
+  pIv={s:s,f:f,root:pRootSpot(rm,s,f),lit:'root',srcs:[],timers:[],
+    text:semis===12?kn+' to '+kn+': octave (12 half steps)':(up?kn+' up to '+nn:kn+' down to '+nn)+': '+name+' ('+semis+' half step'+(semis===1?'':'s')+')'};
+  renderPIv();
+  const later=(ms,fn)=>pIv.timers.push(setTimeout(fn,ms));
+  const gap=0.75, both=pst.tog;
+  later(gap*1000,()=>{pIv.lit='note'; renderPIv();});
+  if(both) later(gap*2000+150,()=>{pIv.lit='both'; renderPIv();});
+  later((both?gap*2000+150+1600:gap*1000+1400),()=>{pIv.lit=null; renderPIv();});
+  if(!$('snd').checked||state.listening) return;
+  try{
+    const c=audioCtx(); if(!c) return;
+    if(c.state==='suspended') c.resume();
+    const t=c.currentTime+0.02;
+    pIv.srcs.push(gtrNote(c,rm,t,{vol:0.58,dur:gap-0.05}));
+    pIv.srcs.push(gtrNote(c,m,t+gap,{vol:0.58,dur:gap+0.3}));
+    if(both){pIv.srcs.push(gtrNote(c,rm,t+gap*2+0.15,{vol:0.45,dur:1.4})); pIv.srcs.push(gtrNote(c,m,t+gap*2+0.15,{vol:0.45,dur:1.4}));}
+  }catch(e){}
+}
 let pReady=true;
 const DRAWERS=['d-cof','d-scales','d-shapes','d-songs','d-listen','d-play'];
 let openD=null;
