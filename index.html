@@ -375,6 +375,23 @@ body.pnl-w{--dw:min(600px,96vw)}
 .pinterval{margin:0;font:600 16px var(--f-body);min-height:1.35em;color:var(--accent)}
 .pneck .pring.proot{stroke:#E8655A;filter:drop-shadow(0 0 6px #E8655A)}
 .sub .ver{opacity:.6;white-space:nowrap}
+#t-tabs,#d-tabs{--pc:#7A4E2D;--on-pc:#FFFFFF}
+#d-tabs{--accent:#1F6FEB;--on-accent:#FFFFFF}
+.tppaste{display:grid;gap:8px;margin:8px 0}
+.tppaste textarea{width:100%;font:13px/1.35 var(--f-mono);padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg);white-space:pre;overflow-x:auto}
+.tppaste button{justify-self:start}
+.tpcard{margin-top:8px}
+.tpcard .ptitle{font-size:19px}
+.pneck .tpd circle{stroke-width:2}
+.pneck .tpd text{font:700 12px var(--f-body);text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.pneck .tpd.now circle{fill:#1F6FEB;stroke:#9CC3FF} .pneck .tpd.now text{fill:#FFFFFF}
+.pneck .tpd.next circle{fill:none;stroke:#8A909B;stroke-dasharray:3 3} .pneck .tpd.next text{fill:#8A909B}
+.ptabsvg .tphit{fill:transparent;cursor:pointer}
+.tppos{margin:6px 0 0;color:#C9CDD4;font-size:12px}
+.tpctl{margin-top:8px;justify-content:flex-start}
+.tpdark{background:#1E2128;color:#F2F2F2;border-color:#3A3F49}
+.plisten .chk{font-size:14px}
+
 @media (max-width:639px){
   .rail button .lg{display:none} .rail button .sm{display:inline}
   .rail button,.rail.l button{padding:0 9px}
@@ -412,7 +429,7 @@ d.querySelector('button').onclick=function(){try{localStorage.removeItem('fv-sta
 <main class="wrap">
   <header>
     <h1>Fretboard Visualizer</h1>
-    <p class="sub">Standard tuning, E A D G B e. Frets 0 to 15. <span class="ver">Version 22</span></p>
+    <p class="sub">Standard tuning, E A D G B e. Frets 0 to 15. <span class="ver">Version 23</span></p>
   </header>
 
   <section class="panel" aria-label="Key and shape">
@@ -692,6 +709,39 @@ d.querySelector('button').onclick=function(){try{localStorage.removeItem('fv-sta
     <p class="hint">The song stays on this device and is never uploaded. Chord names are a best guess from the whole mix, so expect some wrong or missed chords, more so with heavy drums, effects or busy arrangements. Reduce vocals works on songs with the voice in the middle of a stereo mix, and it also thins out anything else in the middle.</p>
   </section>
 
+  <section class="panel drawer" id="d-tabs" data-side="right" aria-label="Tab Player">
+    <div class="dbar"><b>Tab Player</b><button type="button" class="ghost dclose" data-d="d-tabs">Done</button></div>
+    <div class="btnrow">
+      <label class="primary filebtn">Open a PDF or text tab<input type="file" id="tpfile" class="vh" accept=".pdf,.txt,application/pdf,text/plain"></label>
+      <button type="button" class="ghost" id="tppastebtn" aria-expanded="false" aria-controls="tppaste">Paste tab</button>
+    </div>
+    <div class="tppaste" id="tppaste" hidden>
+      <textarea id="tptext" rows="8" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Paste tab here" placeholder="e|---0---3---|&#10;B|---1---0---|&#10;G|---0---0---|&#10;D|---2---0---|&#10;A|---3---2---|&#10;E|-------3---|"></textarea>
+      <button type="button" class="ghost" id="tpuse">Use this tab</button>
+    </div>
+    <p class="mono" id="tpmsg" role="status"></p>
+    <div class="pcard tpcard" id="tpcard" hidden>
+      <h3 class="ptitle" id="tpname"></h3>
+      <div class="pneckwrap"><svg id="tpneck" class="pneck" role="img" aria-label="The notes to play now, on the neck" xmlns="http://www.w3.org/2000/svg"></svg></div>
+      <div class="ptabrow"><div class="ptnames" aria-hidden="true"><span>e</span><span>B</span><span>G</span><span>D</span><span>A</span><span>E</span></div>
+      <div class="ptabwrap" id="tpwrap"><svg id="tpsvg" class="ptabsvg" role="img" aria-label="The tab. Tap a note to start from there." xmlns="http://www.w3.org/2000/svg"></svg></div></div>
+      <p class="tppos mono" id="tppos"></p>
+      <div class="phead tpctl">
+        <button type="button" class="primary" id="tpplay" aria-pressed="false">Play</button>
+        <button type="button" class="ghost tpdark" id="tpback">Start over</button>
+      </div>
+      <div class="popts"><label><span class="lbl">Speed</span><select id="tpbpm"><option value="50">50</option><option value="60">60</option><option value="70">70</option><option value="80">80</option><option value="90">90</option><option value="100">100</option><option value="120">120</option><option value="140">140</option></select></label>
+      <label class="chk"><input type="checkbox" id="tploop"> Loop</label></div>
+    </div>
+    <div class="plisten">
+      <button type="button" class="primary" id="tplisten" aria-pressed="false">Listen to my guitar</button>
+      <label class="chk"><input type="checkbox" id="tpwait"> Wait for me: move on only when I play the right note</label>
+      <p class="pheard" id="tpheard" aria-live="polite"></p>
+      <p class="mono pscore" id="tpscore" hidden></p>
+    </div>
+    <p class="hint">Open a tab saved as a PDF or a text file, or paste one in. Play lights each note on the neck and in the tab as you hear it; tap any note in the tab to hear it and start from there. Speed is beats per minute. Turn on Listen to my guitar and play along: each note you play shows as right or off. With Wait for me on, the tab waits for you to play each note before it moves on, so you can go at your own pace. Tab that's only a scanned picture can't be read. The tab you open stays on this device.</p>
+  </section>
+
   <div class="scrim" id="scrim" hidden></div>
   <nav class="rail l" aria-label="Tools">
     <button type="button" id="t-cof" data-d="d-cof" aria-controls="d-cof" aria-expanded="false" aria-label="Circle of 5ths"><span class="lg">Circle of 5ths</span><span class="sm">Circle</span></button>
@@ -701,6 +751,7 @@ d.querySelector('button').onclick=function(){try{localStorage.removeItem('fv-sta
   </nav>
   <nav class="rail r" aria-label="Listen and play along">
     <button type="button" id="t-listen" data-d="d-listen" aria-controls="d-listen" aria-expanded="false">Listen</button>
+    <button type="button" id="t-tabs" data-d="d-tabs" aria-controls="d-tabs" aria-expanded="false" aria-label="Tab Player"><span class="lg">Tab Player</span><span class="sm">Tabs</span></button>
     <button type="button" id="t-play" data-d="d-play" aria-controls="d-play" aria-expanded="false" aria-label="Play Along"><span class="lg">Play Along</span><span class="sm">Play</span></button>
   </nav>
 </main>
@@ -1030,6 +1081,212 @@ function pentaLick(chain,key){
   });
 }
 /* PENTA-PURE-END */
+/* TABPARSE-START */
+/* Reading tab from text or a PDF. Text tab is six lines of dashes and fret numbers, high e on top.
+   A PDF either holds that same text (tab copied from a website) or draws the six lines and places
+   the numbers on them (Guitar Pro, MuseScore and similar). Both come out as one list of columns. */
+function tabBodyStart(line){
+  const m=line.match(/^(\s*)([A-Ga-g][#b]?)?(\s*)([|:\]]|(?=-))/);
+  if(!m) return -1;
+  return m[0].length;
+}
+function isTabLine(line){
+  const st=tabBodyStart(line); if(st<0) return false;
+  const body=line.slice(st).replace(/\s+$/,'');
+  if(body.length<6) return false;
+  const dashes=(body.match(/-/g)||[]).length;
+  if(dashes<4||!/---/.test(body)) return false;
+  const ok=(body.match(/[-0-9|hpbrsxX\/\\~().^*<>v=:\[\] ]/g)||[]).length;
+  return ok>=body.length*0.9;
+}
+function tabLabelOf(line){const m=line.match(/^\s*([A-Ga-g])[#b]?\s*[|:\]-]/); return m?m[1]:'';}
+function parseTabStaff(lines){
+  /* lines: six strings, index 0 = high e. Returns notes and columns placed by character position. */
+  const notes=[];
+  lines.forEach((ln,s)=>{
+    const st=tabBodyStart(ln), b=ln.slice(st);
+    for(let i=0;i<b.length;i++){
+      const ch=b[i];
+      if(ch<'0'||ch>'9'||(i>0&&b[i-1]>='0'&&b[i-1]<='9')) continue;
+      let len=1, v=+ch;
+      if(i+1<b.length&&b[i+1]>='0'&&b[i+1]<='9'&&+(ch+b[i+1])<=24){len=2; v=+(ch+b[i+1]);}
+      let j=i-1; while(j>=0&&(b[j]==='('||b[j]===' ')) j--;
+      const pc=j>=0?b[j]:'';
+      if(pc==='b'||pc==='r'){ /* bend target or release: part of the note before it */
+        for(let k=notes.length-1;k>=0;k--) if(notes[k].s===s){notes[k].bend=v; break;}
+        i+=len-1; continue;
+      }
+      notes.push({s:s,f:v,at:i,end:i+len-1,mk:pc==='h'||pc==='p'||pc==='/'||pc==='\\'||pc==='s'?(pc==='s'?'/':pc):''});
+      i+=len-1;
+    }
+  });
+  notes.sort((a,b)=>a.at-b.at||a.s-b.s);
+  const cols=[];
+  notes.forEach(n=>{
+    const c=cols.length?cols[cols.length-1]:null;
+    if(c&&n.at<=c.end&&c.f[n.s]==null){c.f[n.s]=n.f; c.mk[n.s]=n.mk; if(n.bend!=null) c.bend[n.s]=n.bend; c.end=Math.max(c.end,n.end); return;}
+    const f=[null,null,null,null,null,null], mk=['','','','','',''], bend=[null,null,null,null,null,null];
+    f[n.s]=n.f; mk[n.s]=n.mk; if(n.bend!=null) bend[n.s]=n.bend;
+    cols.push({pos:n.at,end:n.end,f:f,mk:mk,bend:bend});
+  });
+  return cols;
+}
+function tabFromText(text){
+  const lines=String(text||'').replace(/\t/g,'    ').split(/\r?\n/);
+  const staves=[]; let i=0, odd=0;
+  while(i<lines.length){
+    if(!isTabLine(lines[i])){i++; continue;}
+    let j=i; while(j<lines.length&&isTabLine(lines[j])) j++;
+    const run=j-i;
+    if(run>=6&&run%6===0){ for(let k=i;k<j;k+=6) staves.push(lines.slice(k,k+6)); }
+    else if(run>=6) staves.push(lines.slice(i,i+6));
+    else odd++;
+    i=j;
+  }
+  const sys=staves.map(st=>{
+    const lb=st.map(tabLabelOf);
+    /* A few tabs list the strings low E first; flip those so high e is on top. */
+    if(lb[0].toUpperCase()==='E'&&lb[1].toUpperCase()==='A'&&lb[5].toLowerCase()==='e') st=st.slice().reverse();
+    return parseTabStaff(st);
+  });
+  return tabJoin(sys,odd);
+}
+/* Turn staves of columns into one tab, with each column's length taken from the space before the next one. */
+function tabJoin(sys,odd){
+  const cols=[], gaps=[];
+  sys.forEach((cs,k)=>cs.forEach((c,i)=>{
+    const g=i+1<cs.length?cs[i+1].pos-c.pos:null;
+    if(g!=null&&g>0) gaps.push(g);
+    cols.push({f:c.f,mk:c.mk,bend:c.bend,sys:k,gap:g});
+  }));
+  const sorted=gaps.slice().sort((a,b)=>a-b), med=sorted.length?sorted[Math.floor(sorted.length/2)]:1;
+  cols.forEach(c=>{
+    let st=c.gap==null?1:c.gap/med;
+    st=Math.max(0.5,Math.min(4,Math.round(st*2)/2));
+    c.steps=st; delete c.gap;
+  });
+  let lo=24, hi=0;
+  cols.forEach(c=>c.f.forEach(v=>{if(v!=null){lo=Math.min(lo,v); hi=Math.max(hi,v);}}));
+  return {cols:cols,systems:sys.length,lo:cols.length?lo:0,hi:cols.length?hi:12,odd:odd||0};
+}
+/* Rebuild text lines from a PDF page's text pieces, keeping columns lined up so text tab reads as it was typed. */
+function pdfLines(items){
+  const its=items.filter(t=>t.str&&t.str.length);
+  if(!its.length) return [];
+  const cw=its.filter(t=>t.w>0&&t.str.length>2).map(t=>t.w/t.str.length).sort((a,b)=>a-b);
+  const charW=cw.length?cw[Math.floor(cw.length/2)]:5;
+  const x0=Math.min.apply(null,its.map(t=>t.x));
+  const rows=[];
+  its.slice().sort((a,b)=>b.y-a.y||a.x-b.x).forEach(t=>{
+    const r=rows.length?rows[rows.length-1]:null;
+    if(r&&Math.abs(r.y-t.y)<=Math.max(1,(t.h||charW*1.6)*0.3)) r.items.push(t); else rows.push({y:t.y,items:[t]});
+  });
+  return rows.map(r=>{
+    let s='';
+    r.items.sort((a,b)=>a.x-b.x).forEach(t=>{
+      const col=Math.max(0,Math.round((t.x-x0)/charW));
+      if(col>s.length) s+=' '.repeat(col-s.length);
+      else if(col<s.length&&s.length-col<=1) s=s.slice(0,col);
+      s+=t.str;
+    });
+    return s;
+  });
+}
+/* Drawn tab: find sets of six evenly spaced long lines (five-line music staves are left out),
+   then put each fret number on the line it sits on. */
+function pdfStaves(hl){
+  const ys=[];
+  hl.filter(l=>l.x1-l.x0>=40).sort((a,b)=>b.y-a.y).forEach(l=>{
+    const g=ys.length?ys[ys.length-1]:null;
+    if(g&&Math.abs(g.y-l.y)<0.8){g.x0=Math.min(g.x0,l.x0); g.x1=Math.max(g.x1,l.x1);} else ys.push({y:l.y,x0:l.x0,x1:l.x1});
+  });
+  const out=[]; let i=0;
+  while(i+5<ys.length){
+    const g=ys.slice(i,i+6), d=[]; for(let k=1;k<6;k++) d.push(g[k-1].y-g[k].y);
+    const mean=d.reduce((a,b)=>a+b,0)/5;
+    const even=mean>=2.5&&mean<=24&&d.every(x=>Math.abs(x-mean)<=mean*0.15);
+    const x0=Math.max.apply(null,g.map(q=>q.x0)), x1=Math.min.apply(null,g.map(q=>q.x1));
+    const sixth=i+6<ys.length?ys[i+5].y-ys[i+6].y:1e9;
+    if(even&&x1-x0>30&&!(Math.abs(sixth-mean)<=mean*0.15)){out.push({top:g[0].y,sp:mean,x0:x0,x1:x1}); i+=6;}
+    else i++;
+  }
+  return out;
+}
+function pdfDrawnTab(items,hl){
+  const st=pdfStaves(hl), sys=[];
+  st.forEach(S=>{
+    const notes=[];
+    items.forEach(t=>{
+      const str=String(t.str).replace(/\s+/g,'');
+      const m=str.match(/^\(?(\d{1,2})\)?$/); if(!m) return;
+      const v=+m[1]; if(v>24) return;
+      const h=t.h||S.sp, cx=t.x+(t.w||h*0.55)/2, cy=t.y+h*0.33;
+      if(cx<S.x0-h||cx>S.x1+h) return;
+      const r=(S.top-cy)/S.sp, s=Math.round(r);
+      if(s<0||s>5||Math.abs(r-s)>0.38) return;
+      notes.push({s:s,f:v,x:cx,h:h});
+    });
+    notes.sort((a,b)=>a.x-b.x||a.s-b.s);
+    const cols=[];
+    notes.forEach(n=>{
+      const c=cols.length?cols[cols.length-1]:null;
+      if(c&&Math.abs(n.x-c.x)<=n.h*0.45&&c.f[n.s]==null){c.f[n.s]=n.f; return;}
+      const f=[null,null,null,null,null,null]; f[n.s]=n.f;
+      cols.push({pos:n.x,x:n.x,f:f,mk:['','','','','',''],bend:[null,null,null,null,null,null]});
+    });
+    if(cols.length) sys.push(cols);
+  });
+  return sys;
+}
+/* pages: [{items:[{str,x,y,w,h}], lines:[{x0,x1,y}]}] in page order. */
+function tabFromPdf(pages){
+  let chars=0; pages.forEach(p=>p.items.forEach(t=>{chars+=String(t.str||'').trim().length;}));
+  if(chars<10) return {cols:[],systems:0,lo:0,hi:12,why:'scan'};
+  const text=pages.map(p=>pdfLines(p.items).join('\n')).join('\n\n');
+  const a=tabFromText(text);
+  if(a.cols.length) return Object.assign(a,{how:'text'});
+  const sys=[]; pages.forEach(p=>pdfDrawnTab(p.items,p.lines).forEach(s=>sys.push(s)));
+  const b=tabJoin(sys,0);
+  if(b.cols.length) return Object.assign(b,{how:'drawn'});
+  return Object.assign(b,{why:'none'});
+}
+/* TABPARSE-END */
+/* TABPDF-START */
+/* Pull text pieces and long horizontal lines off one pdf.js page. Lines are tracked through the page's transforms. */
+async function pdfPageData(page,OPS){
+  const tc=await page.getTextContent(), items=tc.items.filter(t=>t&&t.str!=null).map(t=>({str:t.str,x:t.transform[4],y:t.transform[5],w:t.width||0,h:t.height||Math.hypot(t.transform[2],t.transform[3])||0}));
+  const lines=[];
+  try{
+    const ol=await page.getOperatorList(), st=[]; let m=[1,0,0,1,0,0];
+    const mul=(a,b)=>[a[0]*b[0]+a[2]*b[1],a[1]*b[0]+a[3]*b[1],a[0]*b[2]+a[2]*b[3],a[1]*b[2]+a[3]*b[3],a[0]*b[4]+a[2]*b[5]+a[4],a[1]*b[4]+a[3]*b[5]+a[5]];
+    const P=(x,y)=>[m[0]*x+m[2]*y+m[4],m[1]*x+m[3]*y+m[5]];
+    const seg=(p,q)=>{if(Math.abs(p[1]-q[1])<0.6&&Math.abs(p[0]-q[0])>=30) lines.push({x0:Math.min(p[0],q[0]),x1:Math.max(p[0],q[0]),y:(p[1]+q[1])/2});};
+    for(let i=0;i<ol.fnArray.length&&lines.length<4000;i++){
+      const fn=ol.fnArray[i], a=ol.argsArray[i];
+      if(fn===OPS.save) st.push(m.slice());
+      else if(fn===OPS.restore){if(st.length) m=st.pop();}
+      else if(fn===OPS.transform) m=mul(m,a);
+      else if(fn===OPS.constructPath){
+        const ops=a[0], c=a[1]; let k=0, cur=null, start=null;
+        for(const op of ops){
+          if(op===OPS.moveTo){cur=P(c[k],c[k+1]); start=cur; k+=2;}
+          else if(op===OPS.lineTo){const q=P(c[k],c[k+1]); if(cur) seg(cur,q); cur=q; k+=2;}
+          else if(op===OPS.rectangle){const x=c[k],y=c[k+1],w=c[k+2],h=c[k+3]; k+=4;
+            const p0=P(x,y), p1=P(x+w,y+h);
+            if(Math.abs(p1[1]-p0[1])<2.2&&Math.abs(p1[0]-p0[0])>=30) lines.push({x0:Math.min(p0[0],p1[0]),x1:Math.max(p0[0],p1[0]),y:(p0[1]+p1[1])/2});
+            else{const a0=P(x,y),a1=P(x+w,y),a2=P(x+w,y+h),a3=P(x,y+h); seg(a0,a1); seg(a3,a2);}
+            cur=null;}
+          else if(op===OPS.curveTo){cur=P(c[k+4],c[k+5]); k+=6;}
+          else if(op===OPS.curveTo2||op===OPS.curveTo3){cur=P(c[k+2],c[k+3]); k+=4;}
+          else if(op===OPS.closePath){if(cur&&start) seg(cur,start); cur=start;}
+        }
+      }
+    }
+  }catch(e){}
+  return {items:items,lines:lines};
+}
+/* TABPDF-END */
+
 </script>
 
 <script>
@@ -1542,6 +1799,7 @@ function setDet(d){
   if(changed) renderNeck();
   renderRead();
   if(typeof pReady!=='undefined') pHear(d);
+  if(typeof tpReady!=='undefined') tpHear(d);
 }
 
 /* Controls */
@@ -2155,6 +2413,7 @@ async function startListen(deviceId){
   fillDevices();
   renderRead();
   if(typeof pReady!=='undefined') pListenUI();
+  if(typeof tpReady!=='undefined') tpListenUI();
 }
 function stopListen(){
   cancelAnimationFrame(raf); raf=0;
@@ -2169,6 +2428,7 @@ function stopListen(){
   $('listen').setAttribute('aria-pressed','false');
   if(state.det&&state.det.src==='mic') setDet(null); else renderRead();
   leadMode=false; if(typeof pReady!=='undefined') pListenUI();
+  if(typeof tpReady!=='undefined'){tpOwner=null; tpListenUI(); if(tp.play&&!state.listening){tp.start=tp.i; tpPlay();}}
 }
 $('sens').value=String(sens); $('sensval').textContent=String(sens);
 $('sens').addEventListener('input',e=>{
@@ -2759,7 +3019,7 @@ function pRead(q,m){
   $('pscore').textContent='In the scale '+pScore.inn+' · outside '+pScore.out;
 }
 function pListenUI(){
-  const on=state.listening&&leadMode, b=$('plisten');
+  const on=state.listening&&leadMode&&tpOwner!=='tabs', b=$('plisten');
   if(!b) return;
   b.textContent=on?'Stop listening':'Listen to my guitar'; b.setAttribute('aria-pressed',String(on));
   $('t-shapes').classList.toggle('live',on);
@@ -2770,7 +3030,7 @@ $('plisten').addEventListener('click',async()=>{
   if(state.listening&&leadMode){stopListen(); return;}
   pStop();
   unlockAudio();
-  leadMode=true; pScore={inn:0,out:0}; pTrail=[]; pLast=null;
+  leadMode=true; if(typeof tpReady!=='undefined'){tpOwner='shapes'; tpStop();} pScore={inn:0,out:0}; pTrail=[]; pLast=null;
   if(!state.listening) await startListen();
   if(!state.listening){
     leadMode=false;
@@ -2851,7 +3111,251 @@ function pTap(s,f){
   }catch(e){}
 }
 let pReady=true;
-const DRAWERS=['d-cof','d-scales','d-shapes','d-songs','d-listen','d-play'];
+/* Tab Player: open a PDF or text tab, play it in the guitar sound with each note lit on a small neck and in the tab,
+   and with Listen on, check the notes played against the tab. */
+const TPSTORE='fv-tabp-1';
+const tp={tab:null,name:'',i:0,start:0,bpm:70,loop:false,wait:false,play:null,ok:0,miss:0,last:null,heard:null,lo:0,hi:12,xs:[]};
+try{const v=JSON.parse(localStorage.getItem(TPSTORE)||'null'); if(v){
+  if([50,60,70,80,90,100,120,140].indexOf(v.bpm)>=0) tp.bpm=v.bpm;
+  tp.loop=!!v.loop; tp.wait=!!v.wait;
+  if(v.tab&&Array.isArray(v.tab.cols)&&v.tab.cols.length){tp.tab=v.tab; tp.name=String(v.name||'Tab');}
+}}catch(e){}
+function tpSave(withTab){
+  try{
+    const o={bpm:tp.bpm,loop:tp.loop,wait:tp.wait};
+    if(tp.tab){const s=JSON.stringify(tp.tab); if(s.length<400000){o.tab=tp.tab; o.name=tp.name;}}
+    localStorage.setItem(TPSTORE,JSON.stringify(o));
+  }catch(e){}
+}
+const TCW=30, TNW=40, TNM=26, TNT=18, TNR=26;
+function tpMidis(c){const out=[]; c.f.forEach((v,s)=>{if(v!=null) out.push(OPEN[s]+v);}); return out;}
+function tpNotes(){let n=0; if(tp.tab) tp.tab.cols.forEach(c=>c.f.forEach(v=>{if(v!=null) n++;})); return n;}
+function tpRange(){
+  const t=tp.tab; let lo=Math.max(0,(t.lo||0)-1), hi=Math.min(24,Math.max((t.hi||12)+1,lo+8));
+  tp.lo=lo; tp.hi=hi;
+}
+const tnX=f=>TNM+(f-tp.lo+0.5)*TNW, tnY=s=>TNT+s*TNR;
+function renderTpNeck(){
+  const n=tp.hi-tp.lo+1, W=TNM+n*TNW+8, H=TNT+5*TNR+34, p=[];
+  for(let s=0;s<6;s++){
+    p.push('<text class="psn" x="10" y="'+tnY(s)+'">'+STRING_NAMES[s]+'</text>');
+    p.push('<line class="pstr" x1="'+(tp.lo===0?TNM+TNW*0.2:TNM)+'" x2="'+(TNM+n*TNW)+'" y1="'+tnY(s)+'" y2="'+tnY(s)+'"/>');
+  }
+  for(let f=tp.lo;f<=tp.hi;f++){const x=TNM+(f-tp.lo+1)*TNW; p.push('<line class="'+(f===0?'pnut':'pfw')+'" x1="'+x+'" x2="'+x+'" y1="'+tnY(0)+'" y2="'+tnY(5)+'"/>');}
+  if(tp.lo>0) p.push('<line class="pfw" x1="'+TNM+'" x2="'+TNM+'" y1="'+tnY(0)+'" y2="'+tnY(5)+'"/>');
+  for(let f=tp.lo;f<=tp.hi;f++) p.push('<text class="pfn" x="'+tnX(f)+'" y="'+(tnY(5)+26)+'">'+f+'</text>');
+  p.push('<g id="tpnext"></g><g id="tpnow"></g><g id="tpheardg"></g>');
+  const svg=$('tpneck'); svg.setAttribute('viewBox','0 0 '+W+' '+H); svg.style.minWidth=Math.round(W*0.7)+'px'; svg.innerHTML=p.join('');
+}
+function tpDotSvg(s,f,cls){
+  if(f<tp.lo||f>tp.hi) return '';
+  return '<g class="tpd '+cls+'"><circle cx="'+tnX(f)+'" cy="'+tnY(s)+'" r="12"/><text x="'+tnX(f)+'" y="'+tnY(s)+'">'+f+'</text></g>';
+}
+function renderTpNow(){
+  if(!tp.tab) return;
+  const c=tp.tab.cols[tp.i], nx=tp.tab.cols[tp.i+1];
+  const g1=$('tpnow'), g2=$('tpnext');
+  if(g1) g1.innerHTML=c?c.f.map((v,s)=>v==null?'':tpDotSvg(s,v,'now')).join(''):'';
+  if(g2) g2.innerHTML=nx?nx.f.map((v,s)=>v==null?'':tpDotSvg(s,v,'next')).join(''):'';
+  const r=$('tpcur'); if(r) r.setAttribute('x',c?String(tp.xs[tp.i]-TCW/2+2):'-99');
+  const w=$('tpwrap'), x=tp.xs[tp.i];
+  if(w&&x!=null&&(x<w.scrollLeft+30||x>w.scrollLeft+w.clientWidth-60)) w.scrollLeft=Math.max(0,x-w.clientWidth/3);
+  $('tppos').textContent=c?'Note '+(tp.i+1)+' of '+tp.tab.cols.length:'';
+}
+function renderTpTab(){
+  const cols=tp.tab.cols, H=16, Y0=22; let x=14; tp.xs=[];
+  const p=[], bars=[];
+  cols.forEach((c,i)=>{ if(i&&c.sys!==cols[i-1].sys){bars.push(x+2); x+=12;} tp.xs.push(x+TCW/2); x+=TCW; });
+  const W=x+14;
+  p.push('<rect id="tpcur" class="ptcur" x="-99" y="4" width="'+(TCW-4)+'" height="'+(Y0+5*H+6)+'" rx="5"/>');
+  for(let s=0;s<6;s++) p.push('<line class="ptl" x1="0" x2="'+W+'" y1="'+(Y0+s*H)+'" y2="'+(Y0+s*H)+'"/>');
+  bars.forEach(b=>p.push('<line class="ptl" x1="'+b+'" x2="'+b+'" y1="'+Y0+'" y2="'+(Y0+5*H)+'"/><line class="ptl" x1="'+(b+4)+'" x2="'+(b+4)+'" y1="'+Y0+'" y2="'+(Y0+5*H)+'"/>'));
+  cols.forEach((c,i)=>{
+    const cx=tp.xs[i];
+    c.f.forEach((v,s)=>{ if(v==null) return; const y=Y0+s*H, mk=c.mk&&c.mk[s];
+      if(mk) p.push('<text class="ptm" x="'+(cx-TCW/2)+'" y="'+(y-9)+'">'+(mk==='\\'?'\\':mk)+'</text>');
+      p.push('<rect class="ptbg" x="'+(cx-11)+'" y="'+(y-7)+'" width="22" height="14"/><text class="ptn" x="'+cx+'" y="'+y+'">'+v+(c.bend&&c.bend[s]!=null?'b':'')+'</text>');
+    });
+    p.push('<rect class="tphit" data-i="'+i+'" x="'+(cx-TCW/2)+'" y="0" width="'+TCW+'" height="'+(Y0+5*H+12)+'"/>');
+  });
+  const svg=$('tpsvg'); svg.setAttribute('viewBox','0 0 '+W+' '+(Y0+5*H+12)); svg.style.width=W+'px'; svg.innerHTML=p.join('');
+}
+function renderTp(){
+  const has=!!(tp.tab&&tp.tab.cols.length);
+  $('tpcard').hidden=!has;
+  $('tpbpm').value=String(tp.bpm); $('tploop').checked=tp.loop; $('tpwait').checked=tp.wait;
+  if(!has) return;
+  if(tp.i>=tp.tab.cols.length) tp.i=0;
+  $('tpname').textContent=tp.name;
+  tpRange(); renderTpNeck(); renderTpTab(); renderTpNow(); tpListenUI();
+}
+function tpStop(keep){
+  if(tp.play){clearTimeout(tp.play.pump); tp.play.timers.forEach(clearTimeout); tp.play.srcs.forEach(o=>{try{o.stop();}catch(e){}}); tp.play=null;}
+  $('tpplay').textContent='Play'; $('tpplay').setAttribute('aria-pressed','false');
+  if(!keep) renderTpNow();
+}
+function tpSoundCol(c,col,t,len){
+  const out=[]; let k=0;
+  for(let s=5;s>=0;s--){
+    const v=col.f[s]; if(v==null) continue;
+    const m=OPEN[s]+v, mk=col.mk&&col.mk[s], b=col.bend&&col.bend[s];
+    const src=gtrNote(c,m,t+k*0.012,{vol:mk?0.4:0.55,dur:Math.max(0.12,len),from:mk==='/'||mk==='\\'?m+(mk==='/'?-2:2):null});
+    if(b!=null&&b>v){src.playbackRate.setValueAtTime(1,t+0.06); src.playbackRate.linearRampToValueAtTime(Math.pow(2,(b-v)/12),t+Math.min(0.3,len*0.6));}
+    out.push(src); k++;
+  }
+  return out;
+}
+function tpPlay(){
+  tpStop(true);
+  if(!tp.tab) return;
+  if(tp.wait&&state.listening){tpRead(null); renderTpNow(); return;}
+  const c=unlockAudio(); if(!c) return;
+  const step=60/tp.bpm/2, silent=state.listening||!$('snd').checked;
+  const P={next:c.currentTime+0.12,i:tp.i,timers:[],srcs:[],pump:0};
+  tp.play=P;
+  const pump=()=>{
+    if(tp.play!==P) return;
+    while(P.next<c.currentTime+0.5){
+      if(P.i>=tp.tab.cols.length){
+        if(tp.loop){P.i=tp.start; continue;}
+        P.timers.push(setTimeout(()=>{if(tp.play===P){tpStop(true); tp.i=tp.start; renderTpNow(); tpRead(null,'Done. Tap Play to go again.');}},Math.max(0,(P.next-c.currentTime)*1000)+200));
+        return;
+      }
+      const k=P.i, col=tp.tab.cols[k], len=col.steps*step;
+      if(!silent){const ss=tpSoundCol(c,col,P.next,len*0.95); P.srcs.push.apply(P.srcs,ss); if(P.srcs.length>60) P.srcs.splice(0,P.srcs.length-60);}
+      P.timers.push(setTimeout(()=>{if(tp.play===P){tp.i=k; tp.colT=performance.now(); renderTpNow();}},Math.max(0,(P.next-c.currentTime)*1000)));
+      if(P.timers.length>80) P.timers.splice(0,P.timers.length-80);
+      P.next+=len; P.i++;
+    }
+    P.pump=setTimeout(pump,90);
+  };
+  pump();
+  $('tpplay').textContent='Pause'; $('tpplay').setAttribute('aria-pressed','true');
+}
+/* Checking his notes: in Wait for me, the tab moves on only when he plays a note of the current column.
+   While it plays, a note counts if it matches the column now showing or the one just before it. */
+function tpHear(d){
+  if(!tp.tab||!leadMode||!state.listening||tpOwner!=='tabs') return;
+  const now=performance.now();
+  if(!d||d.src!=='mic') return;
+  if(tp.last&&tp.last.m===d.midi&&now-tp.last.t<350){tp.last.t=now; return;}
+  tp.last={m:d.midi,t:now};
+  const cur=tp.tab.cols[tp.i]; if(!cur) return;
+  const want=tpMidis(cur), prev=tp.i>0?tpMidis(tp.tab.cols[tp.i-1]):[];
+  const ok=want.indexOf(d.midi)>=0||(!tp.wait&&tp.play&&prev.indexOf(d.midi)>=0);
+  if(ok) tp.ok++; else tp.miss++;
+  tp.heard={m:d.midi,ok:ok};
+  if(ok&&tp.wait){
+    if(tp.i<tp.tab.cols.length-1){tp.i++; renderTpNow(); tpRead(d.midi,null,want);}
+    else {tpRead(d.midi,null,want); $('tpheard').textContent='Right. That was the last note: you played the whole tab.'; tp.i=tp.start; renderTpNow(); return;}
+  } else tpRead(d.midi,null,want);
+  tpHeardDot(d.midi,ok);
+}
+function tpHeardDot(m,ok){
+  const g=$('tpheardg'); if(!g) return;
+  const c=[]; for(let s=0;s<6;s++){const f=m-OPEN[s]; if(f>=tp.lo&&f<=tp.hi) c.push({s:s,f:f});}
+  const cur=tp.tab.cols[tp.i]||tp.tab.cols[tp.i-1];
+  c.sort((a,b)=>Math.abs(a.f-(cur?cur.f.find(v=>v!=null)||0:0))-Math.abs(b.f-(cur?cur.f.find(v=>v!=null)||0:0)));
+  g.innerHTML=c.length?'<circle class="ph '+(ok?'in':'out')+'" cx="'+tnX(c[0].f)+'" cy="'+tnY(c[0].s)+'" r="17"/>':'';
+}
+function tpRead(m,text,want){
+  const el=$('tpheard');
+  if(text){el.textContent=text; el.className='pheard'; return;}
+  if(m==null){el.textContent=state.listening&&leadMode&&tpOwner==='tabs'?(tp.wait?'Play the lit note. The tab moves on when you get it.':'Listening… play along.'):''; el.className='pheard'; return;}
+  const ok=tp.heard&&tp.heard.ok, nm=noteName(m%12,state.acc);
+  const wn=(want||[]).map(x=>noteName(x%12,state.acc)).filter((v,i,a)=>a.indexOf(v)===i).join(' or ');
+  el.textContent=ok?'Right: '+nm:'Heard '+nm+', the tab wants '+wn;
+  el.className='pheard '+(ok?'in':'out');
+  $('tpscore').textContent='Right '+tp.ok+' · off '+tp.miss;
+}
+var tpOwner=null;
+function tpListenUI(){
+  const on=state.listening&&leadMode&&tpOwner==='tabs', b=$('tplisten'); if(!b) return;
+  b.textContent=on?'Stop listening':'Listen to my guitar'; b.setAttribute('aria-pressed',String(on));
+  $('t-tabs').classList.toggle('live',on||!!tp.play);
+  $('tpscore').hidden=!on;
+  if(!on){$('tpheard').textContent=''; $('tpheard').className='pheard'; const g=$('tpheardg'); if(g) g.innerHTML='';}
+}
+$('tplisten').addEventListener('click',async()=>{
+  if(state.listening&&leadMode&&tpOwner==='tabs'){stopListen(); return;}
+  tpStop(true); if(typeof pStop==='function') pStop();
+  unlockAudio();
+  leadMode=true; tpOwner='tabs'; tp.ok=0; tp.miss=0; tp.last=null; tp.heard=null;
+  if(!state.listening) await startListen();
+  if(!state.listening){leadMode=false; tpOwner=null; $('tpheard').textContent=$('lmsg').textContent||$('micstat').textContent||'The microphone did not start.'; $('tpheard').className='pheard out'; return;}
+  tpListenUI(); tpRead(null);
+});
+$('tpplay').addEventListener('click',()=>{if(tp.play){tpStop();} else {tp.start=tp.i; tpPlay();}});
+$('tpback').addEventListener('click',()=>{const was=!!tp.play; tpStop(true); tp.i=0; tp.start=0; tp.ok=0; tp.miss=0; renderTpNow(); if(was) tpPlay(); else tpRead(null);});
+$('tpbpm').addEventListener('change',e=>{tp.bpm=+e.target.value; tpSave(); if(tp.play){tp.start=tp.i; tpPlay();}});
+$('tploop').addEventListener('change',e=>{tp.loop=e.target.checked; tpSave();});
+$('tpwait').addEventListener('change',e=>{tp.wait=e.target.checked; tpSave(); if(tp.wait&&tp.play&&state.listening) tpStop(); tpRead(null);});
+$('tpsvg').addEventListener('click',e=>{
+  const r=e.target.closest&&e.target.closest('.tphit'); if(!r) return;
+  tp.i=+r.dataset.i; tp.start=tp.i;
+  if(tp.play) tpPlay(); else {renderTpNow(); if(!state.listening){const c=unlockAudio(); if(c&&$('snd').checked) tpSoundCol(c,tp.tab.cols[tp.i],c.currentTime+0.02,0.9);}}
+});
+$('tppastebtn').addEventListener('click',()=>{const h=$('tppaste').hidden; $('tppaste').hidden=!h; $('tppastebtn').setAttribute('aria-expanded',String(h)); if(h) $('tptext').focus();});
+$('tpuse').addEventListener('click',()=>{tpLoad(tabFromText($('tptext').value),'Pasted tab','text');});
+function tpLoad(r,name,how){
+  tpStop(true);
+  if(!r||!r.cols||!r.cols.length){
+    $('tpmsg').textContent=r&&r.why==='scan'?'This PDF is a scanned picture with no text in it, so I can\'t read the tab from it. If you have the same tab as text or from a tab website, paste it or open that instead.':
+      how==='pdf'?'I found text in this PDF but no tab in it. Tab needs six string lines (e B G D A E) with fret numbers on them.':
+      'No tab found. Tab needs six lines of dashes and fret numbers, high e on top, like e|---0---3---|.';
+    return false;
+  }
+  tp.tab={cols:r.cols,lo:r.lo,hi:r.hi,systems:r.systems}; tp.name=name; tp.i=0; tp.start=0; tp.ok=0; tp.miss=0;
+  tpSave(); renderTp(); tpRead(null);
+  const n=tpNotes();
+  $('tpmsg').textContent='Read '+n+' note'+(n===1?'':'s')+' in '+r.systems+' line'+(r.systems===1?'':'s')+' of tab'+(how==='pdf'?' from the PDF':'')+'. Tab shows the frets but not the rhythm, so the timing comes from how the notes are spaced.';
+  return true;
+}
+const PDFJS=['https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/','https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/'];
+function tpScript(u){return new Promise((res,rej)=>{const s=document.createElement('script'); s.src=u; s.async=true; s.onload=()=>res(); s.onerror=()=>{s.remove(); rej(new Error('load'));}; document.head.appendChild(s);});}
+async function tpPdfLib(){
+  if(window.pdfjsLib&&window.pdfjsWorker) return window.pdfjsLib;
+  for(const b of PDFJS){
+    try{
+      if(!window.pdfjsLib) await tpScript(b+'pdf.min.js');
+      if(!window.pdfjsWorker) await tpScript(b+'pdf.worker.min.js');
+      if(window.pdfjsLib){window.pdfjsLib.GlobalWorkerOptions.workerSrc=b+'pdf.worker.min.js'; return window.pdfjsLib;}
+    }catch(e){}
+  }
+  throw new Error('nolib');
+}
+$('tpfile').addEventListener('change',async e=>{
+  const file=e.target.files&&e.target.files[0]; e.target.value='';
+  if(!file) return;
+  const base=file.name.replace(/\.[^.]+$/,'')||'Tab';
+  const isPdf=/\.pdf$/i.test(file.name)||file.type==='application/pdf';
+  $('tpmsg').textContent='Reading '+file.name+'…';
+  try{
+    if(!isPdf){
+      const txt=await file.text(), line=txt.split(/\r?\n/).find(l=>l.indexOf('DATA:')===0);
+      if(line){ /* a tab exported from Play Along: turn its times into note lengths */
+        const d=JSON.parse(line.slice(5)), cs=(d.cols||[]).filter(c=>c&&Array.isArray(c.f)&&c.f.length===6).sort((a,b)=>a.t-b.t);
+        const gaps=[]; cs.forEach((c,i)=>{if(i+1<cs.length) gaps.push(cs[i+1].t-c.t);});
+        const med=gaps.length?gaps.slice().sort((a,b)=>a-b)[Math.floor(gaps.length/2)]:0.5;
+        let lo=24,hi=0; const cols=cs.map((c,i)=>{const f=c.f.map(v=>v==null||!isFinite(v)?null:Math.max(0,Math.min(24,Math.round(v)))); f.forEach(v=>{if(v!=null){lo=Math.min(lo,v);hi=Math.max(hi,v);}});
+          return {f:f,mk:['','','','','',''],bend:[null,null,null,null,null,null],sys:0,steps:i+1<cs.length?Math.max(0.5,Math.min(4,Math.round((cs[i+1].t-c.t)/med*2)/2)):1};});
+        tpLoad({cols:cols,systems:1,lo:lo,hi:hi},base,'text'); return;
+      }
+      tpLoad(tabFromText(txt),base,'text'); return;
+    }
+    let lib;
+    try{lib=await tpPdfLib();}catch(err){$('tpmsg').textContent='The PDF reader didn\'t load. Check the internet connection and try again.'; return;}
+    const doc=await lib.getDocument({data:new Uint8Array(await file.arrayBuffer()),isEvalSupported:false,disableFontFace:true}).promise;
+    const pages=[], N=Math.min(doc.numPages,40);
+    for(let i=1;i<=N;i++){$('tpmsg').textContent='Reading page '+i+' of '+N+'…'; pages.push(await pdfPageData(await doc.getPage(i),lib.OPS));}
+    tpLoad(tabFromPdf(pages),base,'pdf');
+  }catch(err){
+    $('tpmsg').textContent=err&&err.name==='PasswordException'?'This PDF is locked with a password, so it can\'t be read here.':'That file could not be read as a PDF or text tab.';
+  }
+});
+renderTp();
+let tpReady=true;
+const DRAWERS=['d-cof','d-scales','d-shapes','d-songs','d-listen','d-tabs','d-play'];
 let openD=null;
 function setDrawer(id){
   if(id===openD) id=null;
@@ -2861,7 +3365,7 @@ function setDrawer(id){
   });
   const side=id?$(id).dataset.side:null;
   /* Class names pnl-l and pnl-r: 'dl' is already the neck's label class (pointer-events:none), which froze the page. */
-  document.body.classList.toggle('pnl-l',side==='left'); document.body.classList.toggle('pnl-w',id==='d-shapes'); document.body.classList.toggle('pnl-r',side==='right');
+  document.body.classList.toggle('pnl-l',side==='left'); document.body.classList.toggle('pnl-w',id==='d-shapes'||id==='d-tabs'); document.body.classList.toggle('pnl-r',side==='right');
   $('scrim').hidden=!id;
   openD=id;
 }
