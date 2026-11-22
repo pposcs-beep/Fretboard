@@ -320,6 +320,61 @@ body.pnl-l .rail.l{left:calc(var(--dw) + 4px)} body.pnl-r .rail.r{right:calc(var
   .rail button,.rail.l button{writing-mode:horizontal-tb;transform:none;min-height:44px;min-width:0;padding:0 10px;font-size:13px}
   .drawer{--dw:88vw;bottom:calc(68px + env(safe-area-inset-bottom,0px))}
 }
+#t-shapes,#d-shapes{--pc:#23262E;--on-pc:#FFFFFF}
+#d-shapes{--accent:#1F6FEB;--on-accent:#FFFFFF}
+body.pnl-w{--dw:min(600px,96vw)}
+.rail button .sm{display:none}
+.pctl{display:grid;gap:10px;margin:4px 0 12px}
+.pkeys{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.pkeys button{min-height:40px;border:1px solid var(--line);background:var(--bg);border-radius:6px;font:500 14px var(--f-mono);cursor:pointer}
+.pkeys button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.pcard{background:#15171C;color:#F2F2F2;border-radius:14px;padding:14px 12px 10px;box-shadow:inset 0 0 0 1px #2C3038}
+.ptitle{font:700 22px/1.2 Georgia,'Times New Roman',serif;text-align:center;margin:0 0 6px;color:#F5F5F5}
+.pneckwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.pneck{display:block;width:100%;height:auto}
+.pneck .psn{font:500 13px var(--f-body);fill:#C9CDD4;dominant-baseline:central;text-anchor:middle}
+.pneck .pfn{font:500 13px var(--f-body);fill:#C9CDD4;text-anchor:middle}
+.pneck .pstr,.pneck .pfw{stroke:#D9DCE1;stroke-width:1.4}
+.pneck .pnut{stroke:#F2F2F2;stroke-width:5}
+.pneck .pout{fill:rgb(31 111 235 / .1);stroke:#1F6FEB;stroke-width:5;stroke-linejoin:round}
+.pneck .pdot{cursor:pointer}
+.pneck .pdot circle{fill:#F4F4F2;stroke:#15171C;stroke-width:2}
+.pneck .pdot text{font:700 13px var(--f-body);fill:#16181D;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.pneck .pdot.root circle{fill:#E8655A}
+.pneck .pdot.dim{opacity:.55}
+.pneck .pring{fill:none;stroke:#4DA3FF;stroke-width:4;filter:drop-shadow(0 0 6px #4DA3FF)}
+.pneck .ph{fill:none;stroke-width:4}
+.pneck .ph.in{stroke:#4DA3FF} .pneck .ph.near{stroke:#F2B632} .pneck .ph.out{stroke:#FF5A5A}
+.pshapes{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-top:8px}
+.pshapes button{min-width:48px;min-height:44px;padding:0 12px;background:#1E2128;color:#F2F2F2;border:2px solid #3A3F49;border-radius:8px;font:700 16px var(--f-body);cursor:pointer}
+.pshapes button[aria-pressed="true"]{border-color:#1F6FEB;background:#16233A;box-shadow:0 0 0 1px #1F6FEB}
+.pcap{text-align:center;color:#C9CDD4;font-size:13px;margin:6px 0 0}
+.pdesc{margin:8px 2px 12px;font-size:14px}
+.ptabcard{padding:10px 10px 8px}
+.phead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+.phead b{font:700 15px var(--f-display)}
+.phead button{min-height:44px}
+.ptabrow{display:flex;gap:4px}
+.ptnames{display:grid;grid-template-rows:repeat(6,16px);padding-top:14px;font:500 12px var(--f-mono);color:#C9CDD4;line-height:16px}
+.ptabwrap{overflow-x:auto;flex:1;-webkit-overflow-scrolling:touch}
+.ptabsvg{display:block;height:auto}
+.ptabsvg .ptl{stroke:#8A909B;stroke-width:1}
+.ptabsvg .ptbg{fill:#15171C}
+.ptabsvg .ptn{font:700 13px var(--f-mono);fill:#F2F2F2;text-anchor:middle;dominant-baseline:central}
+.ptabsvg .ptm{font:600 11px var(--f-mono);fill:#C9CDD4;text-anchor:middle}
+.ptabsvg .ptcur{fill:#1F6FEB;opacity:.55}
+.popts{display:flex;align-items:end;gap:14px;flex-wrap:wrap;margin-top:8px;color:#F2F2F2}
+.popts .lbl{color:#C9CDD4}
+.popts select{min-height:40px;background:#1E2128;color:#F2F2F2;border:1px solid #3A3F49;border-radius:6px;padding:0 8px}
+.plisten{margin-top:14px;display:grid;gap:6px;justify-items:start}
+.pheard{margin:0;font:600 15px var(--f-body);min-height:1.3em}
+.pheard.in{color:var(--accent)} .pheard.near{color:#B7860B} .pheard.out{color:var(--bad)}
+.pscore{margin:0;font-size:13px;color:var(--muted)}
+@media (max-width:639px){
+  .rail button .lg{display:none} .rail button .sm{display:inline}
+  .rail button,.rail.l button{padding:0 9px}
+  .ptitle{font-size:19px}
+}
 @media (prefers-reduced-motion:reduce){.drawer,.rail,body{transition:none}}
 
 /* Chords in the key: always under the neck. */
@@ -471,6 +526,37 @@ d.querySelector('button').onclick=function(){try{localStorage.removeItem('fv-sta
     <p class="hint">Tap a scale to light it up on the neck, then pick Whole neck or one box at a time. Play runs the scale up an octave and back down; tap it again to stop. The key follows the key you pick at the top or on the circle of fifths.</p>
   </section>
 
+  <section class="panel drawer" id="d-shapes" data-side="left" aria-label="Pentatonic shapes">
+    <div class="dbar"><b>Pentatonic Shapes</b><button type="button" class="ghost dclose" data-d="d-shapes">Done</button></div>
+    <div class="pctl">
+      <div class="pkeys" id="pkeys" role="group" aria-label="Key"><button type="button" data-k="0"></button><button type="button" data-k="1"></button><button type="button" data-k="2"></button><button type="button" data-k="3"></button><button type="button" data-k="4"></button><button type="button" data-k="5"></button><button type="button" data-k="6"></button><button type="button" data-k="7"></button><button type="button" data-k="8"></button><button type="button" data-k="9"></button><button type="button" data-k="10"></button><button type="button" data-k="11"></button></div>
+      <div class="seg" id="pmode" role="group" aria-label="Major or minor"><button type="button" data-m="maj">Major</button><button type="button" data-m="min">Minor</button></div>
+    </div>
+    <div class="pcard">
+      <h3 class="ptitle" id="ptitle"></h3>
+      <div class="pneckwrap"><svg id="pneck" class="pneck" role="img" xmlns="http://www.w3.org/2000/svg"></svg></div>
+      <div class="pshapes" id="pshapes" role="group" aria-label="CAGED scale shapes"></div>
+      <p class="pcap">CAGED scale shapes</p>
+    </div>
+    <p class="pdesc" id="pdesc"></p>
+    <div class="pcard ptabcard">
+      <div class="phead"><b id="plickt">Lick</b>
+        <button type="button" class="primary" id="pplay" aria-pressed="false">Play lick</button>
+      </div>
+      <div class="ptabrow"><div class="ptnames" aria-hidden="true"><span>e</span><span>B</span><span>G</span><span>D</span><span>A</span><span>E</span></div>
+      <div class="ptabwrap" id="ptabwrap"><svg id="ptabsvg" class="ptabsvg" role="img" aria-labelledby="ptabtxt" xmlns="http://www.w3.org/2000/svg"></svg></div></div>
+      <p class="vh" id="ptabtxt"></p>
+      <div class="popts"><label><span class="lbl">Speed</span><select id="pbpm"><option value="60">Slow (60)</option><option value="75">75</option><option value="90">Medium (90)</option><option value="110">110</option><option value="130">Fast (130)</option></select></label>
+      <label class="chk"><input type="checkbox" id="ploop"> Loop</label></div>
+    </div>
+    <div class="plisten">
+      <button type="button" class="primary" id="plisten" aria-pressed="false">Listen to my guitar</button>
+      <p class="pheard" id="pheard" aria-live="polite"></p>
+      <p class="mono pscore" id="pscore" hidden></p>
+    </div>
+    <p class="hint">Pick one shape to outline it, or two next to each other to join them into one bigger box, like C and A, or E and D. Full shows every note of the scale. Play lick lights up each note on the diagram and the tab as it plays. Listen to my guitar follows your lead lines: each note you play lights up where it sits, blue in the shape, gold in the scale but outside the shape, and red when it isn't in the scale. It follows single notes; chords won't show right. The key is the same key you pick at the top of the page.</p>
+  </section>
+
   <section class="panel drawer" id="d-songs" data-side="left" aria-label="My Songs">
     <div class="dbar"><b>My Songs</b><button type="button" class="ghost dclose" data-d="d-songs">Done</button></div>
     <h2>My Songs</h2>
@@ -597,13 +683,14 @@ d.querySelector('button').onclick=function(){try{localStorage.removeItem('fv-sta
 
   <div class="scrim" id="scrim" hidden></div>
   <nav class="rail l" aria-label="Tools">
-    <button type="button" id="t-cof" data-d="d-cof" aria-controls="d-cof" aria-expanded="false">Circle of 5ths</button>
+    <button type="button" id="t-cof" data-d="d-cof" aria-controls="d-cof" aria-expanded="false" aria-label="Circle of 5ths"><span class="lg">Circle of 5ths</span><span class="sm">Circle</span></button>
     <button type="button" id="t-scales" data-d="d-scales" aria-controls="d-scales" aria-expanded="false">Scales</button>
-    <button type="button" id="t-songs" data-d="d-songs" aria-controls="d-songs" aria-expanded="false">My Songs</button>
+    <button type="button" id="t-shapes" data-d="d-shapes" aria-controls="d-shapes" aria-expanded="false" aria-label="Pentatonic shapes">Shapes</button>
+    <button type="button" id="t-songs" data-d="d-songs" aria-controls="d-songs" aria-expanded="false" aria-label="My Songs"><span class="lg">My Songs</span><span class="sm">Songs</span></button>
   </nav>
   <nav class="rail r" aria-label="Listen and play along">
     <button type="button" id="t-listen" data-d="d-listen" aria-controls="d-listen" aria-expanded="false">Listen</button>
-    <button type="button" id="t-play" data-d="d-play" aria-controls="d-play" aria-expanded="false">Play Along</button>
+    <button type="button" id="t-play" data-d="d-play" aria-controls="d-play" aria-expanded="false" aria-label="Play Along"><span class="lg">Play Along</span><span class="sm">Play</span></button>
   </nav>
 </main>
 
@@ -843,6 +930,95 @@ function yin(buf,sr,clar){
   const shift=den?0.5*(a-c)/den:0;
   return sr/(best+shift);
 }
+/* PENTA-PURE-START */
+/* CAGED pentatonic shapes: each box is two notes per string, walking the scale up from one note on the low E string.
+   Box k starts on the k-th scale note; for major and minor alike the boxes are the E, D, C, A and G shapes in that order. */
+const PF=17;
+const P_IV={maj:[0,2,4,7,9],min:[0,3,5,7,10]};
+const P_LET=['E','D','C','A','G'];
+const P_ORDER=['C','A','G','E','D'];
+function pentaBoxes(key,mode){
+  const iv=P_IV[mode]||P_IV.maj, pcs=new Set(iv.map(i=>(key+i)%12)), out=[];
+  iv.forEach((deg,k)=>{
+    const f0=((key+deg-4)%12+12)%12;
+    [f0,f0+12].forEach(start=>{
+      const seq=[];
+      for(let m=40+start;seq.length<12;m++) if(pcs.has(m%12)) seq.push(m);
+      const notes=[];
+      for(let j=0;j<6;j++){const s=5-j; for(let q=0;q<2;q++){const m=seq[j*2+q]; notes.push({s:s,f:m-OPEN[s],m:m});}}
+      const fs=notes.map(n=>n.f), lo=Math.min.apply(null,fs), hi=Math.max.apply(null,fs);
+      if(lo<0||hi>PF) return;
+      out.push({k:k,name:P_LET[k],start:start,lo:lo,hi:hi,notes:notes});
+    });
+  });
+  out.sort((a,b)=>a.start-b.start);
+  out.forEach((b,i)=>b.gi=i);
+  return out;
+}
+/* Pick one copy of each chosen shape so the group sits as close together on the neck as it can. */
+function pentaPick(boxes,letters){
+  const groups=letters.map(L=>boxes.filter(b=>b.name===L)).filter(g=>g.length);
+  if(!groups.length) return [];
+  let best=null, bestSpan=1e9, bestLo=1e9;
+  (function walk(i,acc){
+    if(i===groups.length){
+      const lo=Math.min.apply(null,acc.map(b=>b.lo)), hi=Math.max.apply(null,acc.map(b=>b.hi));
+      if(hi-lo<bestSpan||(hi-lo===bestSpan&&lo<bestLo)){bestSpan=hi-lo; bestLo=lo; best=acc.slice();}
+      return;
+    }
+    groups[i].forEach(b=>{acc.push(b); walk(i+1,acc); acc.pop();});
+  })(0,[]);
+  return best.slice().sort((a,b)=>a.start-b.start);
+}
+/* Shapes next to each other on the neck share a note on every string, so they join into one outlined group. */
+function pentaChains(picked){
+  const chains=[];
+  picked.forEach(b=>{
+    const last=chains.length?chains[chains.length-1]:null;
+    if(last&&b.gi===last[last.length-1].gi+1) last.push(b); else chains.push([b]);
+  });
+  return chains;
+}
+/* Per string (0 = high e), the lowest and highest fret a group of shapes covers. */
+function chainRows(chain){
+  const rows=[];
+  for(let s=0;s<6;s++){
+    const fs=[]; chain.forEach(b=>b.notes.forEach(n=>{if(n.s===s) fs.push(n.f);}));
+    rows.push([Math.min.apply(null,fs),Math.max.apply(null,fs)]);
+  }
+  return rows;
+}
+/* A lick that shows the group: climb the lower strings of the first shape, cross into the last shape on the
+   top strings, then come back down and land on the home note. Marks: h hammer-on, p pull-off, / and \ slides. */
+function pentaLick(chain,key){
+  const per=Math.max(1,Math.ceil(6/chain.length)), up=[];
+  for(let j=0;j<6;j++){
+    const s=5-j, b=chain[Math.min(chain.length-1,Math.floor(j/per))];
+    b.notes.filter(n=>n.s===s).forEach(n=>up.push(n));
+  }
+  const asc=[];
+  up.forEach(n=>{if(!asc.length||n.m>asc[asc.length-1].m) asc.push(n);});
+  const last=chain[chain.length-1], down=last.notes.slice().sort((a,b)=>b.m-a.m);
+  const top=asc[asc.length-1], seq=asc.slice();
+  let i=down.findIndex(n=>n.m<top.m), n=0;
+  for(;i>=0&&i<down.length;i++){
+    seq.push(down[i]); n++;
+    if(n>=4&&(down[i].m-key)%12===0) break;
+  }
+  if((seq[seq.length-1].m-key)%12!==0){
+    const roots=last.notes.filter(x=>(x.m-key)%12===0).sort((a,b)=>Math.abs(a.m-seq[seq.length-1].m)-Math.abs(b.m-seq[seq.length-1].m));
+    if(roots.length) seq.push(roots[0]);
+  }
+  return seq.map((x,j)=>{
+    const p=seq[j-1]; let mk='';
+    if(p&&p.s===x.s&&p.f!==x.f){
+      const shift=Math.abs(x.f-p.f)>3||!chain.some(b=>b.notes.some(q=>q.s===p.s&&q.f===p.f)&&b.notes.some(q=>q.s===x.s&&q.f===x.f));
+      mk=shift?(x.f>p.f?'/':'\\'):(x.f>p.f?'h':'p');
+    }
+    return {s:x.s,f:x.f,m:x.m,mk:mk};
+  });
+}
+/* PENTA-PURE-END */
 </script>
 
 <script>
@@ -1336,10 +1512,10 @@ function showDia(c){
   renderShapeSelect(); refresh();
 }
 function renderAll(){
-  renderKeys(); renderShapeSelect(); renderTypes(); renderSegs(); renderNeck(); renderChips(); renderRead(); renderCof();
+  renderKeys(); renderShapeSelect(); renderTypes(); renderSegs(); renderNeck(); renderChips(); renderRead(); renderCof(); if(typeof pReady!=='undefined') renderPenta();
 }
 function refresh(){
-  renderKeys(); renderTypes(); renderSegs(); renderNeck(); renderChips(); renderRead(); renderCof(); save();
+  renderKeys(); renderTypes(); renderSegs(); renderNeck(); renderChips(); renderRead(); renderCof(); if(typeof pReady!=='undefined') renderPenta(); save();
 }
 function setChord(cd){
   const prev=state.chordDet;
@@ -1354,6 +1530,7 @@ function setDet(d){
   const changed=(!prev&&d)||(prev&&!d)||(prev&&d&&prev.midi!==d.midi);
   if(changed) renderNeck();
   renderRead();
+  if(typeof pReady!=='undefined') pHear(d);
 }
 
 /* Controls */
@@ -1754,7 +1931,7 @@ $('neck').addEventListener('click',e=>{
 
 /* Listen */
 let sens=6; try{const v=+localStorage.getItem('fv-sens'); if(v>=1&&v<=10) sens=v;}catch(e){}
-let inGain=null, hist=[];
+let inGain=null, hist=[], leadMode=false;
 const sensGain=()=>Math.pow(2,(sens-5)/1.4);   /* 1: x0.6 ... 6: x1.6 ... 10: x12 */
 const sensClar=()=>Math.min(0.32,0.12+0.02*sens); /* how unclear a note may be and still count */
 let stream=null, src=null, analyser=null, buf=null, spec=null, chroma=null, raf=0, lastRun=0, cand=-1, candN=0, lastHeard=0, cCand='', cCandN=0, lastChord=0;
@@ -1776,14 +1953,14 @@ async function fillDevices(){
 }
 function tick(t){
   raf=requestAnimationFrame(tick);
-  if(!analyser||t-lastRun<40) return;
+  if(!analyser||t-lastRun<(leadMode?25:40)) return;
   lastRun=t;
   analyser.getFloatTimeDomainData(buf);
   /* Chord check first: strummed chords take priority over single notes. */
   let rms=0; for(let i=0;i<buf.length;i++) rms+=buf[i]*buf[i]; rms=Math.sqrt(rms/buf.length);
   let heard=null;
   showLevel(rms);
-  if(rms>0.003){
+  if(rms>0.003&&!leadMode){
     analyser.getFloatFrequencyData(spec);
     const cr=chromaFromSpectrum(spec,ctx.sampleRate,analyser.fftSize);
     if(cr){
@@ -1805,19 +1982,19 @@ function tick(t){
   }
   if(state.chordDet&&t-lastChord<700) return;
   if(state.chordDet) setChord(null);
-  const f=yin(buf.subarray(buf.length-4096),ctx.sampleRate,sensClar());
+  const f=yin(buf.subarray(buf.length-(leadMode?2048:4096)),ctx.sampleRate,sensClar());
   const mf=f>0?freqToMidi(f):-1, m=f>0?Math.round(mf):-1;
   /* Smooth: show a note once it is the most common pitch in the last 5 reads, and hold it briefly. */
-  hist.push(m>=36&&m<=90?m:-1); if(hist.length>5) hist.shift();
+  hist.push(m>=36&&m<=90?m:-1); while(hist.length>(leadMode?3:5)) hist.shift();
   const cnt={}; let best=-1, bestN=0;
   hist.forEach(v=>{if(v<0) return; cnt[v]=(cnt[v]||0)+1; if(cnt[v]>bestN){bestN=cnt[v]; best=v;}});
-  const need=sens>=8?2:3;
+  const need=leadMode?2:(sens>=8?2:3);
   if(best>=0&&bestN>=need){
     lastHeard=t;
     const cur=state.det&&state.det.src==='mic'?state.det:null;
     if(m===best) setDet({midi:m,freq:f,cents:Math.round((mf-m)*100),src:'mic'});
     else if(!cur||cur.midi!==best) setDet({midi:best,freq:midiToFreq(best),cents:0,src:'mic'});
-  }else if(state.det&&state.det.src==='mic'&&t-lastHeard>700) setDet(null);
+  }else if(state.det&&state.det.src==='mic'&&t-lastHeard>(leadMode?350:700)) setDet(null);
 }
 function micStat(t){$('micstat').textContent=t;}
 let lvlT=0;
@@ -1886,6 +2063,7 @@ async function startListen(deviceId){
   raf=requestAnimationFrame(tick);
   fillDevices();
   renderRead();
+  if(typeof pReady!=='undefined') pListenUI();
 }
 function stopListen(){
   cancelAnimationFrame(raf); raf=0;
@@ -1899,6 +2077,7 @@ function stopListen(){
   $('listen').textContent='Listen';
   $('listen').setAttribute('aria-pressed','false');
   if(state.det&&state.det.src==='mic') setDet(null); else renderRead();
+  leadMode=false; if(typeof pReady!=='undefined') pListenUI();
 }
 $('sens').value=String(sens); $('sensval').textContent=String(sens);
 $('sens').addEventListener('input',e=>{
@@ -1906,7 +2085,7 @@ $('sens').addEventListener('input',e=>{
   if(inGain) inGain.gain.value=sensGain();
   try{localStorage.setItem('fv-sens',String(sens));}catch(err){}
 });
-$('listen').addEventListener('click',()=>{if(state.listening) stopListen(); else {unlockAudio(); startListen();}});
+$('listen').addEventListener('click',()=>{if(state.listening) stopListen(); else {leadMode=false; unlockAudio(); startListen();}});
 $('dev').addEventListener('change',async e=>{
   const id=e.target.value;
   stopListen(); unlockAudio();
@@ -2295,7 +2474,243 @@ $('ksmode').addEventListener('click',e=>{
 });
 
 /* ---- Side drawers ---- */
-const DRAWERS=['d-cof','d-scales','d-songs','d-listen','d-play'];
+/* ---------- Pentatonic shapes panel: CAGED boxes, joined outlines, a lick, and lead listening ---------- */
+const PSTORE='fv-penta-1';
+const pst={mode:state.cmode==='min'?'min':'maj',sel:[],bpm:90,loop:false};
+try{const v=JSON.parse(localStorage.getItem(PSTORE)||'null'); if(v){
+  if(v.mode==='min'||v.mode==='maj') pst.mode=v.mode;
+  if(Array.isArray(v.sel)) pst.sel=v.sel.filter(x=>P_LET.indexOf(x)>=0);
+  if([60,75,90,110,130].indexOf(v.bpm)>=0) pst.bpm=v.bpm;
+  pst.loop=!!v.loop;
+}}catch(e){}
+function pSave(){try{localStorage.setItem(PSTORE,JSON.stringify({mode:pst.mode,sel:pst.sel,bpm:pst.bpm,loop:pst.loop}));}catch(e){}}
+const PCW=48, PRH=34, PLM=30, PTOP=22;
+let pv={boxes:[],picked:[],chains:[],lick:[],lo:0,hi:PF,cells:new Set(),scale:new Set()};
+let pPlay=null, pNow=-1, pTrail=[], pLast=null, pScore={inn:0,out:0};
+const pX=(f)=>PLM+(f-pv.lo+0.5)*PCW, pY=s=>PTOP+s*PRH;
+function pKeyName(){return noteName(state.key,state.acc);}
+function pCompute(){
+  pv.boxes=pentaBoxes(state.key,pst.mode);
+  pv.picked=pentaPick(pv.boxes,pst.sel);
+  pv.chains=pentaChains(pv.picked);
+  pv.cells=new Set(); pv.picked.forEach(b=>b.notes.forEach(n=>pv.cells.add(n.s+','+n.f)));
+  pv.scale=new Set(P_IV[pst.mode].map(i=>(state.key+i)%12));
+  let lo=0, hi=PF;
+  if(pv.picked.length){
+    lo=Math.min.apply(null,pv.picked.map(b=>b.lo)); hi=Math.max.apply(null,pv.picked.map(b=>b.hi));
+    lo=Math.max(0,lo-1); hi=Math.min(PF,hi+1);
+    let grow=0; while(hi-lo<8&&grow<20){ if(grow%2===0&&hi<PF) hi++; else if(lo>0) lo--; else if(hi<PF) hi++; grow++; }
+  }
+  pv.lo=lo; pv.hi=hi;
+  const ch=pv.chains.length?pv.chains[0]:[pv.boxes.find(b=>b.name==='E')||pv.boxes[0]];
+  pv.lick=pentaLick(ch,state.key);
+}
+/* The outline: walk down the right side of the group and back up the left, rounding every corner. */
+function pOutline(rows){
+  const pad=PCW*0.44, pts=[];
+  const L=rows.map(r=>pX(r[0])-pad), R=rows.map(r=>pX(r[1])+pad);
+  const top=s=>pY(s)-PRH/2, bot=s=>pY(s)+PRH/2;
+  pts.push([L[0],top(0)],[R[0],top(0)]);
+  for(let s=0;s<6;s++){pts.push([R[s],top(s)],[R[s],bot(s)]);}
+  pts.push([L[5],bot(5)]);
+  for(let s=5;s>=0;s--){pts.push([L[s],bot(s)],[L[s],top(s)]);}
+  const p=[];
+  pts.forEach(q=>{const l=p[p.length-1]; if(!l||Math.abs(l[0]-q[0])>.01||Math.abs(l[1]-q[1])>.01) p.push(q);});
+  if(Math.abs(p[0][0]-p[p.length-1][0])<.01&&Math.abs(p[0][1]-p[p.length-1][1])<.01) p.pop();
+  const v=p.filter((q,i)=>{const a=p[(i-1+p.length)%p.length], b=p[(i+1)%p.length]; return !((Math.abs(a[0]-q[0])<.01&&Math.abs(b[0]-q[0])<.01)||(Math.abs(a[1]-q[1])<.01&&Math.abs(b[1]-q[1])<.01));});
+  const rad=11; let d='';
+  v.forEach((q,i)=>{
+    const a=v[(i-1+v.length)%v.length], b=v[(i+1)%v.length];
+    const la=Math.hypot(q[0]-a[0],q[1]-a[1]), lb=Math.hypot(b[0]-q[0],b[1]-q[1]);
+    const r=Math.min(rad,la/2,lb/2);
+    const p1=[q[0]+(a[0]-q[0])*r/la,q[1]+(a[1]-q[1])*r/la], p2=[q[0]+(b[0]-q[0])*r/lb,q[1]+(b[1]-q[1])*r/lb];
+    d+=(i?'L':'M')+r1(p1[0])+' '+r1(p1[1])+'Q'+r1(q[0])+' '+r1(q[1])+' '+r1(p2[0])+' '+r1(p2[1]);
+  });
+  return d+'Z';
+}
+function pLabel(m){
+  const i=((m-state.key)%12+12)%12;
+  return state.labels==='degree'?DEG[i]:noteName(m%12,state.acc);
+}
+function renderPNeck(){
+  const n=pv.hi-pv.lo+1, W=PLM+n*PCW+8, H=PTOP+5*PRH+40;
+  const p=[];
+  const x0=PLM+(pv.lo===0?PCW:0), x1=PLM+n*PCW;
+  for(let s=0;s<6;s++){
+    p.push('<text class="psn" x="12" y="'+pY(s)+'">'+STRING_NAMES[s]+'</text>');
+    p.push('<line class="pstr" x1="'+(pv.lo===0?PLM+PCW*0.2:x0)+'" x2="'+x1+'" y1="'+pY(s)+'" y2="'+pY(s)+'"/>');
+  }
+  for(let f=Math.max(0,pv.lo);f<=pv.hi;f++){
+    const x=PLM+(f-pv.lo+1)*PCW;
+    p.push('<line class="'+(f===0?'pnut':'pfw')+'" x1="'+x+'" x2="'+x+'" y1="'+pY(0)+'" y2="'+pY(5)+'"/>');
+  }
+  if(pv.lo>0) p.push('<line class="pfw" x1="'+PLM+'" x2="'+PLM+'" y1="'+pY(0)+'" y2="'+pY(5)+'"/>');
+  for(let f=pv.lo;f<=pv.hi;f++) p.push('<text class="pfn" x="'+pX(f)+'" y="'+(pY(5)+30)+'">'+f+'</text>');
+  pv.chains.forEach(ch=>p.push('<path class="pout" d="'+pOutline(chainRows(ch))+'"/>'));
+  for(let s=0;s<6;s++) for(let f=pv.lo;f<=pv.hi;f++){
+    const m=OPEN[s]+f; if(!pv.scale.has(m%12)) continue;
+    const root=m%12===state.key, inb=!pv.picked.length||pv.cells.has(s+','+f);
+    p.push('<g class="pdot'+(root?' root':'')+(inb?'':' dim')+'" data-s="'+s+'" data-f="'+f+'" id="pd-'+s+'-'+f+'"><circle cx="'+pX(f)+'" cy="'+pY(s)+'" r="14"/><text x="'+pX(f)+'" y="'+pY(s)+'">'+pLabel(m)+'</text></g>');
+  }
+  p.push('<g id="phear"></g><g id="pcur"></g>');
+  const svg=$('pneck');
+  svg.setAttribute('viewBox','0 0 '+W+' '+H);
+  svg.style.minWidth=Math.round(W*0.68)+'px';
+  svg.setAttribute('aria-label',pTitle()+' on frets '+pv.lo+' to '+pv.hi+(pv.picked.length?', '+pv.picked.map(b=>b.name).join(' and ')+' shape outlined':''));
+  svg.innerHTML=p.join('');
+  renderPHear(); renderPCur();
+}
+function pTitle(){return pKeyName()+(pst.mode==='min'?' Minor':' Major')+' Pentatonic';}
+function renderPTab(){
+  const L=pv.lick, CW=34, H=16, Y0=22, W=12+L.length*CW+12;
+  const p=['<rect id="ptcur" class="ptcur" x="-99" y="4" width="'+(CW-4)+'" height="'+(Y0+5*H+6)+'" rx="5"/>'];
+  for(let s=0;s<6;s++) p.push('<line class="ptl" x1="0" x2="'+W+'" y1="'+(Y0+s*H)+'" y2="'+(Y0+s*H)+'"/>');
+  L.forEach((n,i)=>{
+    const x=12+i*CW+CW/2, y=Y0+n.s*H;
+    if(n.mk) p.push('<text class="ptm" x="'+(x-CW/2)+'" y="'+(y-9)+'">'+(n.mk==='\\'?'\\':n.mk)+'</text>');
+    p.push('<rect class="ptbg" x="'+(x-11)+'" y="'+(y-7)+'" width="22" height="14"/><text class="ptn" data-i="'+i+'" x="'+x+'" y="'+y+'">'+n.f+'</text>');
+  });
+  const svg=$('ptabsvg');
+  svg.setAttribute('viewBox','0 0 '+W+' '+(Y0+5*H+12));
+  svg.style.width=W+'px';
+  svg.innerHTML=p.join('');
+  $('ptabtxt').textContent='Lick: '+L.map(n=>STRING_NAMES[n.s]+' '+(n.mk||'')+n.f).join(', ');
+}
+function renderPCur(){
+  const g=$('pcur'); if(!g) return;
+  const n=pNow>=0?pv.lick[pNow]:null;
+  g.innerHTML=n&&n.f>=pv.lo&&n.f<=pv.hi?'<circle class="pring" cx="'+pX(n.f)+'" cy="'+pY(n.s)+'" r="19"/>':'';
+  const r=$('ptcur'); if(r) r.setAttribute('x',pNow>=0?String(12+pNow*34+2):'-99');
+  if(pNow>=0){const w=$('ptabwrap'); const x=12+pNow*34; if(w&&(x<w.scrollLeft+20||x>w.scrollLeft+w.clientWidth-60)) w.scrollLeft=Math.max(0,x-w.clientWidth/3);}
+}
+function renderPHear(){
+  const g=$('phear'); if(!g) return;
+  g.innerHTML=pTrail.map((t,i)=>{
+    if(t.f<pv.lo||t.f>pv.hi) return '';
+    const age=pTrail.length-1-i, op=Math.max(0.18,1-age*0.2);
+    return '<circle class="ph '+t.cls+'" cx="'+pX(t.f)+'" cy="'+pY(t.s)+'" r="'+(age?17:20)+'" style="opacity:'+op+'"/>';
+  }).join('');
+}
+function renderPSel(){
+  $('pshapes').innerHTML='<button type="button" data-l="full" aria-pressed="'+(!pst.sel.length)+'">Full</button>'+
+    P_ORDER.map(L=>'<button type="button" data-l="'+L+'" aria-pressed="'+(pst.sel.indexOf(L)>=0)+'" aria-label="'+L+' shape">'+L+'</button>').join('');
+  $('pmode').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.m===pst.mode)));
+  $('pkeys').querySelectorAll('button').forEach(b=>{b.textContent=noteName(+b.dataset.k,state.acc); b.setAttribute('aria-pressed',String(+b.dataset.k===state.key));});
+  $('pbpm').value=String(pst.bpm); $('ploop').checked=pst.loop;
+  const ch=pv.chains, desc=!pst.sel.length?'Full neck: every note of the scale. Pick a shape to outline it.':
+    ch.map(c=>c.map(b=>b.name).join(' + ')+' shape'+(c.length>1?'s joined':'')+', frets '+Math.min.apply(null,c.map(b=>b.lo))+' to '+Math.max.apply(null,c.map(b=>b.hi))).join('; ')+'.';
+  $('pdesc').textContent=desc;
+  $('plickt').textContent=pv.chains.length>1?'Lick in the '+pv.chains[0].map(b=>b.name).join(' + ')+' shape':'Lick in the '+(pv.chains[0]||[pv.boxes.find(b=>b.name==='E')]).map(b=>b.name).join(' + ')+' shape'+(pv.chains.length&&pv.chains[0].length>1?'s':'');
+}
+function renderPenta(){
+  if(!$('d-shapes')) return;
+  pCompute();
+  $('ptitle').textContent=pTitle();
+  renderPSel(); renderPNeck(); renderPTab(); pListenUI();
+}
+function pStop(keep){
+  if(pPlay){pPlay.oscs.forEach(o=>{try{o.stop();}catch(e){}}); pPlay.timers.forEach(clearTimeout); pPlay=null;}
+  if(!keep){pNow=-1; renderPCur();}
+  $('pplay').textContent='Play lick'; $('pplay').setAttribute('aria-pressed','false');
+}
+function pPlayLick(){
+  pStop();
+  if(state.listening) stopListen();
+  const c=unlockAudio(); if(!c||!pv.lick.length) return;
+  const step=60/pst.bpm/2, t0=c.currentTime+0.08, oscs=[], timers=[];
+  pv.lick.forEach((n,i)=>{
+    const t=t0+i*step, last=i===pv.lick.length-1, len=last?step*3:step*0.95;
+    const o=c.createOscillator(), g=c.createGain();
+    o.type='triangle'; o.frequency.value=midiToFreq(n.m);
+    if(n.mk==='/'||n.mk==='\\'){const p=pv.lick[i-1]; o.frequency.setValueAtTime(midiToFreq(p.m),t); o.frequency.exponentialRampToValueAtTime(midiToFreq(n.m),t+Math.min(0.08,step*0.4));}
+    const a=n.mk?0.2:0.3;
+    g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(a,t+0.008); g.gain.exponentialRampToValueAtTime(a*0.45,t+Math.min(0.12,len*0.5)); g.gain.exponentialRampToValueAtTime(0.0001,t+len);
+    o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+len+0.02); oscs.push(o);
+    timers.push(setTimeout(()=>{pNow=i; renderPCur();},Math.max(0,(t-c.currentTime)*1000)));
+  });
+  const end=(t0-c.currentTime+pv.lick.length*step+step*2)*1000;
+  timers.push(setTimeout(()=>{ if(pst.loop&&pPlay){pPlayLick();} else {pStop();} },end));
+  pPlay={oscs:oscs,timers:timers};
+  $('pplay').textContent='Stop'; $('pplay').setAttribute('aria-pressed','true');
+}
+/* Lead listening: the Listen code runs in a faster single-note mode and each new note is placed on the diagram,
+   inside the outlined shape when it can be, with a short trail of the last few notes. */
+function pPlace(m){
+  const c=[]; for(let s=0;s<6;s++){const f=m-OPEN[s]; if(f>=0&&f<=PF) c.push({s:s,f:f});}
+  if(!c.length) return null;
+  const lastP=pTrail.length?pTrail[pTrail.length-1]:null, mid=(pv.lo+pv.hi)/2;
+  c.forEach(q=>{
+    q.sc=(pv.cells.has(q.s+','+q.f)?0:40)+(q.f>=pv.lo&&q.f<=pv.hi?0:20)+(lastP?Math.abs(q.f-lastP.f)+Math.abs(q.s-lastP.s)*0.5:Math.abs(q.f-mid)*0.5);
+  });
+  c.sort((a,b)=>a.sc-b.sc);
+  return c[0];
+}
+function pHear(d){
+  if(!leadMode||!state.listening) return;
+  const now=performance.now();
+  if(!d||d.src!=='mic'){ if(pLast&&now-pLast.t>1500){pLast=null; pRead(null);} return; }
+  if(pLast&&pLast.m===d.midi&&now-pLast.t<350){pLast.t=now; return;}
+  const q=pPlace(d.midi); pLast={m:d.midi,t:now};
+  if(!q){pRead(null); return;}
+  const insc=pv.scale.has(d.midi%12), insh=!pv.picked.length?insc:pv.cells.has(q.s+','+q.f);
+  q.cls=insh?'in':insc?'near':'out';
+  if(insc) pScore.inn++; else pScore.out++;
+  pTrail.push(q); if(pTrail.length>6) pTrail.shift();
+  renderPHear(); pRead(q,d.midi);
+}
+function pRead(q,m){
+  const el=$('pheard');
+  if(!q){el.textContent=state.listening&&leadMode?'Listening… play a note.':''; el.className='pheard'; return;}
+  const nm=noteName(m%12,state.acc)+' ('+STRING_NAMES[q.s]+' string, fret '+q.f+')';
+  el.textContent=q.cls==='in'?nm+': in the shape':q.cls==='near'?nm+': in the scale, outside the shape':nm+': not in '+pTitle();
+  el.className='pheard '+q.cls;
+  $('pscore').textContent='In the scale '+pScore.inn+' · outside '+pScore.out;
+}
+function pListenUI(){
+  const on=state.listening&&leadMode, b=$('plisten');
+  if(!b) return;
+  b.textContent=on?'Stop listening':'Listen to my guitar'; b.setAttribute('aria-pressed',String(on));
+  $('t-shapes').classList.toggle('live',on);
+  if(!on){ if(!state.listening){pTrail=[]; pLast=null; renderPHear();} $('pheard').textContent=''; $('pheard').className='pheard'; }
+  $('pscore').hidden=!on;
+}
+$('plisten').addEventListener('click',async()=>{
+  if(state.listening&&leadMode){stopListen(); return;}
+  pStop();
+  unlockAudio();
+  leadMode=true; pScore={inn:0,out:0}; pTrail=[]; pLast=null;
+  if(!state.listening) await startListen();
+  if(!state.listening){
+    leadMode=false;
+    $('pheard').textContent=$('lmsg').textContent||$('micstat').textContent||'The microphone did not start.'; $('pheard').className='pheard out';
+    return;
+  }
+  pListenUI(); pRead(null);
+});
+$('pplay').addEventListener('click',()=>{if(pPlay) pStop(); else pPlayLick();});
+$('pshapes').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  const L=b.dataset.l;
+  if(L==='full') pst.sel=[];
+  else {const i=pst.sel.indexOf(L); if(i>=0) pst.sel.splice(i,1); else pst.sel.push(L);}
+  pStop(); pTrail=[]; pSave(); renderPenta();
+});
+$('pmode').addEventListener('click',e=>{const b=e.target.closest('button'); if(!b) return; pst.mode=b.dataset.m; pStop(); pTrail=[]; pSave(); renderPenta();});
+$('pkeys').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  /* One key for the whole page: picking it here also changes the neck, circle and scales. */
+  pStop(); pTrail=[];
+  state.key=+b.dataset.k; state.ckey=state.key; state.pstep=0; refresh();
+});
+$('pbpm').addEventListener('change',e=>{pst.bpm=+e.target.value; pSave(); if(pPlay) pPlayLick();});
+$('ploop').addEventListener('change',e=>{pst.loop=e.target.checked; pSave();});
+$('pneck').addEventListener('click',e=>{
+  const g=e.target.closest&&e.target.closest('.pdot'); if(!g) return;
+  const m=OPEN[+g.dataset.s]+(+g.dataset.f);
+  unlockAudio(); pluck(m);
+});
+let pReady=true;
+const DRAWERS=['d-cof','d-scales','d-shapes','d-songs','d-listen','d-play'];
 let openD=null;
 function setDrawer(id){
   if(id===openD) id=null;
@@ -2305,7 +2720,7 @@ function setDrawer(id){
   });
   const side=id?$(id).dataset.side:null;
   /* Class names pnl-l and pnl-r: 'dl' is already the neck's label class (pointer-events:none), which froze the page. */
-  document.body.classList.toggle('pnl-l',side==='left'); document.body.classList.toggle('pnl-r',side==='right');
+  document.body.classList.toggle('pnl-l',side==='left'); document.body.classList.toggle('pnl-w',id==='d-shapes'); document.body.classList.toggle('pnl-r',side==='right');
   $('scrim').hidden=!id;
   openD=id;
 }
