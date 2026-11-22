@@ -350,7 +350,7 @@ body.pnl-w{--dw:min(600px,96vw)}
 .pshapes button[aria-pressed="true"]{border-color:#1F6FEB;background:#16233A;box-shadow:0 0 0 1px #1F6FEB}
 .pcap{text-align:center;color:#C9CDD4;font-size:13px;margin:6px 0 0}
 .pdesc{margin:8px 2px 12px;font-size:14px}
-.ptabcard{padding:10px 10px 8px}
+.ptabcard{margin:10px 0 4px;padding:10px 0 4px;border-top:1px solid #2C3038;border-bottom:1px solid #2C3038}
 .phead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
 .phead b{font:700 15px var(--f-display)}
 .phead button{min-height:44px}
@@ -429,7 +429,7 @@ d.querySelector('button').onclick=function(){try{localStorage.removeItem('fv-sta
 <main class="wrap">
   <header>
     <h1>Fretboard Visualizer</h1>
-    <p class="sub">Standard tuning, E A D G B e. Frets 0 to 15. <span class="ver">Version 23</span></p>
+    <p class="sub">Standard tuning, E A D G B e. Frets 0 to 15. <span class="ver">Version 24</span></p>
   </header>
 
   <section class="panel" aria-label="Key and shape">
@@ -557,8 +557,23 @@ d.querySelector('button').onclick=function(){try{localStorage.removeItem('fv-sta
     <div class="pcard">
       <h3 class="ptitle" id="ptitle"></h3>
       <div class="pneckwrap"><svg id="pneck" class="pneck" role="img" xmlns="http://www.w3.org/2000/svg"></svg></div>
+      <div class="ptabcard">
+        <div class="phead"><b id="plickt">Lick</b>
+          <button type="button" class="primary" id="pplay" aria-pressed="false">Play lick</button>
+        </div>
+        <div class="ptabrow"><div class="ptnames" aria-hidden="true"><span>e</span><span>B</span><span>G</span><span>D</span><span>A</span><span>E</span></div>
+        <div class="ptabwrap" id="ptabwrap"><svg id="ptabsvg" class="ptabsvg" role="img" aria-labelledby="ptabtxt" xmlns="http://www.w3.org/2000/svg"></svg></div></div>
+        <p class="vh" id="ptabtxt"></p>
+        <div class="popts"><label><span class="lbl">Speed</span><select id="pbpm"><option value="60">Slow (60)</option><option value="75">75</option><option value="90">Medium (90)</option><option value="110">110</option><option value="130">Fast (130)</option></select></label>
+        <label class="chk"><input type="checkbox" id="ploop"> Loop</label></div>
+      </div>
       <div class="pshapes" id="pshapes" role="group" aria-label="CAGED scale shapes"></div>
       <p class="pcap">CAGED scale shapes</p>
+    </div>
+    <div class="plisten">
+      <button type="button" class="primary" id="plisten" aria-pressed="false">Listen to my guitar</button>
+      <p class="pheard" id="pheard" aria-live="polite"></p>
+      <p class="mono pscore" id="pscore" hidden></p>
     </div>
     <div class="pint">
       <div class="pirow"><span class="lbl">Dots show</span><div class="seg" id="plab" role="group" aria-label="Dots show"><button type="button" data-v="note">Notes</button><button type="button" data-v="int">Intervals</button></div></div>
@@ -567,22 +582,7 @@ d.querySelector('button').onclick=function(){try{localStorage.removeItem('fv-sta
       <p class="pinterval" id="pintv" aria-live="polite"></p>
     </div>
     <p class="pdesc" id="pdesc"></p>
-    <div class="pcard ptabcard">
-      <div class="phead"><b id="plickt">Lick</b>
-        <button type="button" class="primary" id="pplay" aria-pressed="false">Play lick</button>
-      </div>
-      <div class="ptabrow"><div class="ptnames" aria-hidden="true"><span>e</span><span>B</span><span>G</span><span>D</span><span>A</span><span>E</span></div>
-      <div class="ptabwrap" id="ptabwrap"><svg id="ptabsvg" class="ptabsvg" role="img" aria-labelledby="ptabtxt" xmlns="http://www.w3.org/2000/svg"></svg></div></div>
-      <p class="vh" id="ptabtxt"></p>
-      <div class="popts"><label><span class="lbl">Speed</span><select id="pbpm"><option value="60">Slow (60)</option><option value="75">75</option><option value="90">Medium (90)</option><option value="110">110</option><option value="130">Fast (130)</option></select></label>
-      <label class="chk"><input type="checkbox" id="ploop"> Loop</label></div>
-    </div>
-    <div class="plisten">
-      <button type="button" class="primary" id="plisten" aria-pressed="false">Listen to my guitar</button>
-      <p class="pheard" id="pheard" aria-live="polite"></p>
-      <p class="mono pscore" id="pscore" hidden></p>
-    </div>
-    <p class="hint">Pick one shape to outline it, or two next to each other to join them into one bigger box, like C and A, or E and D. Full shows every note of the scale. Play lick lights up each note on the diagram and the tab as it plays. Listen to my guitar follows your lead lines: each note you play lights up where it sits, blue in the shape, gold in the scale but outside the shape, and red when it isn't in the scale. It follows single notes; chords won't show right. The key is the same key you pick at the top of the page.</p>
+    <p class="hint">Pick one shape to outline it, or two next to each other to join them into one bigger box, like C and A, or E and D. Full shows every note of the scale. Play lick lights up each note on the neck and in the tab under it as it plays. With Listen on, the first tab note lights up and moves on each time you play the right one, so you can work through the lick at your own speed. Listen to my guitar also follows your lead lines: each note you play lights up where it sits, blue in the shape, gold in the scale but outside the shape, and red when it isn't in the scale. It follows single notes; chords won't show right. The key is the same key you pick at the top of the page.</p>
   </section>
 
   <section class="panel drawer" id="d-songs" data-side="left" aria-label="My Songs">
@@ -2839,7 +2839,7 @@ try{const v=JSON.parse(localStorage.getItem(PSTORE)||'null'); if(v){
 function pSave(){try{localStorage.setItem(PSTORE,JSON.stringify({mode:pst.mode,sel:pst.sel,bpm:pst.bpm,loop:pst.loop,lab:pst.lab,tap:pst.tap,tog:pst.tog}));}catch(e){}}
 const PCW=48, PRH=34, PLM=30, PTOP=22;
 let pv={boxes:[],picked:[],chains:[],lick:[],lo:0,hi:PF,cells:new Set(),scale:new Set()};
-let pPlay=null, pNow=-1, pTrail=[], pLast=null, pScore={inn:0,out:0}, pIv=null;
+let pPlay=null, pNow=-1, pTrail=[], pLast=null, pScore={inn:0,out:0}, pIv=null, pFol=0;
 const pX=(f)=>PLM+(f-pv.lo+0.5)*PCW, pY=s=>PTOP+s*PRH;
 function pKeyName(){return noteName(state.key,state.acc);}
 function pCompute(){
@@ -2962,6 +2962,7 @@ function renderPenta(){
   if(!$('d-shapes')) return;
   pCompute();
   $('ptitle').textContent=pTitle();
+  pFol=0; if(!pPlay) pNow=state.listening&&leadMode&&tpOwner!=='tabs'?0:-1;
   renderPSel(); renderPNeck(); renderPTab(); pListenUI();
 }
 function pStop(keep){
@@ -3008,13 +3009,22 @@ function pHear(d){
   q.cls=insh?'in':insc?'near':'out';
   if(insc) pScore.inn++; else pScore.out++;
   pTrail.push(q); if(pTrail.length>6) pTrail.shift();
-  renderPHear(); pRead(q,d.midi);
+  renderPHear();
+  /* Follow the tab: the lit tab note moves on when he plays it. */
+  let tabMsg='';
+  if(pv.lick.length&&!pPlay){
+    const w=pv.lick[pFol]||pv.lick[0];
+    if(d.midi===w.m){pFol++; if(pFol>=pv.lick.length){pFol=0; tabMsg='You played the whole lick.';} else tabMsg='Tab: right.'; }
+    else tabMsg='Tab wants '+noteName(w.m%12,state.acc)+' ('+STRING_NAMES[w.s]+' string, fret '+w.f+').';
+    pNow=pFol; renderPCur();
+  }
+  pRead(q,d.midi,tabMsg);
 }
-function pRead(q,m){
+function pRead(q,m,tabMsg){
   const el=$('pheard');
-  if(!q){el.textContent=state.listening&&leadMode?'Listening… play a note.':''; el.className='pheard'; return;}
+  if(!q){el.textContent=state.listening&&leadMode?'Listening… play the lit tab note, or play freely.':''; el.className='pheard'; return;}
   const nm=noteName(m%12,state.acc)+' ('+STRING_NAMES[q.s]+' string, fret '+q.f+')';
-  el.textContent=q.cls==='in'?nm+': in the shape':q.cls==='near'?nm+': in the scale, outside the shape':nm+': not in '+pTitle();
+  el.textContent=(q.cls==='in'?nm+': in the shape':q.cls==='near'?nm+': in the scale, outside the shape':nm+': not in '+pTitle())+(tabMsg?'. '+tabMsg:'');
   el.className='pheard '+q.cls;
   $('pscore').textContent='In the scale '+pScore.inn+' · outside '+pScore.out;
 }
@@ -3023,7 +3033,7 @@ function pListenUI(){
   if(!b) return;
   b.textContent=on?'Stop listening':'Listen to my guitar'; b.setAttribute('aria-pressed',String(on));
   $('t-shapes').classList.toggle('live',on);
-  if(!on){ if(!state.listening){pTrail=[]; pLast=null; renderPHear();} $('pheard').textContent=''; $('pheard').className='pheard'; }
+  if(!on){ if(!state.listening){pTrail=[]; pLast=null; renderPHear(); if(!pPlay&&pNow>=0){pNow=-1; renderPCur();}} $('pheard').textContent=''; $('pheard').className='pheard'; }
   $('pscore').hidden=!on;
 }
 $('plisten').addEventListener('click',async()=>{
@@ -3037,7 +3047,7 @@ $('plisten').addEventListener('click',async()=>{
     $('pheard').textContent=$('lmsg').textContent||$('micstat').textContent||'The microphone did not start.'; $('pheard').className='pheard out';
     return;
   }
-  pListenUI(); pRead(null);
+  pFol=0; pNow=0; renderPCur(); pListenUI(); pRead(null);
 });
 $('pplay').addEventListener('click',()=>{if(pPlay) pStop(); else pPlayLick();});
 $('pshapes').addEventListener('click',e=>{
