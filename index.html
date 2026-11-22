@@ -526,8 +526,8 @@ d.querySelector('button').onclick=function(){try{localStorage.removeItem('fv-sta
     <p class="hint">Tap a scale to light it up on the neck, then pick Whole neck or one box at a time. Play runs the scale up an octave and back down; tap it again to stop. The key follows the key you pick at the top or on the circle of fifths.</p>
   </section>
 
-  <section class="panel drawer" id="d-shapes" data-side="left" aria-label="Pentatonic shapes">
-    <div class="dbar"><b>Pentatonic Shapes</b><button type="button" class="ghost dclose" data-d="d-shapes">Done</button></div>
+  <section class="panel drawer" id="d-shapes" data-side="left" aria-label="Scale Shapes">
+    <div class="dbar"><b>Scale Shapes</b><button type="button" class="ghost dclose" data-d="d-shapes">Done</button></div>
     <div class="pctl">
       <div class="pkeys" id="pkeys" role="group" aria-label="Key"><button type="button" data-k="0"></button><button type="button" data-k="1"></button><button type="button" data-k="2"></button><button type="button" data-k="3"></button><button type="button" data-k="4"></button><button type="button" data-k="5"></button><button type="button" data-k="6"></button><button type="button" data-k="7"></button><button type="button" data-k="8"></button><button type="button" data-k="9"></button><button type="button" data-k="10"></button><button type="button" data-k="11"></button></div>
       <div class="seg" id="pmode" role="group" aria-label="Major or minor"><button type="button" data-m="maj">Major</button><button type="button" data-m="min">Minor</button></div>
@@ -685,7 +685,7 @@ d.querySelector('button').onclick=function(){try{localStorage.removeItem('fv-sta
   <nav class="rail l" aria-label="Tools">
     <button type="button" id="t-cof" data-d="d-cof" aria-controls="d-cof" aria-expanded="false" aria-label="Circle of 5ths"><span class="lg">Circle of 5ths</span><span class="sm">Circle</span></button>
     <button type="button" id="t-scales" data-d="d-scales" aria-controls="d-scales" aria-expanded="false">Scales</button>
-    <button type="button" id="t-shapes" data-d="d-shapes" aria-controls="d-shapes" aria-expanded="false" aria-label="Pentatonic shapes">Shapes</button>
+    <button type="button" id="t-shapes" data-d="d-shapes" aria-controls="d-shapes" aria-expanded="false" aria-label="Scale Shapes"><span class="lg">Scale Shapes</span><span class="sm">Shapes</span></button>
     <button type="button" id="t-songs" data-d="d-songs" aria-controls="d-songs" aria-expanded="false" aria-label="My Songs"><span class="lg">My Songs</span><span class="sm">Songs</span></button>
   </nav>
   <nav class="rail r" aria-label="Listen and play along">
@@ -1575,7 +1575,7 @@ $('nnext').addEventListener('click',()=>{
   const i=NECK_ORDER.indexOf(state.nshape);
   state.nshape=NECK_ORDER[(i+1)%NECK_ORDER.length]; refresh();
 });
-$('dia').addEventListener('click',e=>{const b=e.target.closest('button'); if(!b) return; showDia(diaChords()[+b.dataset.i]); if(typeof coversPage==='function'&&coversPage()) setDrawer(null);});
+$('dia').addEventListener('click',e=>{const b=e.target.closest('button'); if(!b) return; const cd=diaChords()[+b.dataset.i]; unlockAudio(); strumChord(cd.root,cd.ci); showDia(cd); if(typeof coversPage==='function'&&coversPage()) setDrawer(null);});
 $('keynotes').addEventListener('click',()=>{
   state.key=state.ckey; state.kind='scale'; state.scale=DIA[state.cmode].scale; state.labels='degree';
   renderShapeSelect(); refresh();
@@ -1910,15 +1910,85 @@ function pluck(m){
   try{
     const c=audioCtx(); if(!c) return;
     if(c.state==='suspended') c.resume();
-    const o=c.createOscillator(), g=c.createGain(), t=c.currentTime;
-    o.type='triangle'; o.frequency.value=midiToFreq(m);
-    g.gain.setValueAtTime(0.0001,t);
-    g.gain.exponentialRampToValueAtTime(0.3,t+0.01);
-    g.gain.exponentialRampToValueAtTime(0.0001,t+1.4);
-    o.connect(g); g.connect(c.destination);
-    o.start(t); o.stop(t+1.5);
+    gtrNote(c,m,c.currentTime+0.005,{vol:0.6});
   }catch(e){}
 }
+/* Guitar sound: a plucked-string model (Karplus-Strong), rendered once per note and kept for reuse,
+   then run through a small body filter so it sounds like a clean guitar rather than a beep. */
+const gtrCache=new Map(); let gtrBus=null;
+function gtrRender(sr,m){
+  const f=midiToFreq(m), P=sr/f, T60=Math.max(1.1,Math.min(3,3-(m-40)*0.045)), dur=Math.min(1.6,T60);
+  const N=Math.floor(sr*dur), out=new Float32Array(N);
+  let D=P-0.5, Di=Math.floor(D), fr=D-Di; if(fr<0.1&&Di>2){Di--; fr+=1;}
+  const a=(1-fr)/(1+fr), S=Math.pow(10,-3/(f*T60)), soft=Math.max(0.25,Math.min(0.75,0.95-(m-40)*0.012));
+  let lp=0, mean=0;
+  for(let i=0;i<Di&&i<N;i++){lp+=soft*((Math.random()*2-1)-lp); out[i]=lp; mean+=lp;}
+  mean/=Math.max(1,Di); for(let i=0;i<Di&&i<N;i++) out[i]-=mean;
+  /* Pluck point about a seventh of the way along the string takes the edge off the attack. */
+  const pp=Math.max(1,Math.round(Di*0.14)); for(let i=Di-1;i>=pp;i--) out[i]-=0.5*out[i-pp];
+  let apx=0, apy=0;
+  for(let n=Di;n<N;n++){
+    const avg=0.5*(out[n-Di]+(n-Di-1>=0?out[n-Di-1]:0))*S;
+    const y=a*avg+apx-a*apy; apx=avg; apy=y; out[n]=y;
+  }
+  let pk=0; for(let i=0;i<N;i++){const v=Math.abs(out[i]); if(v>pk) pk=v;}
+  const fade=Math.floor(sr*0.08), g=pk?0.8/pk:1;
+  for(let i=0;i<N;i++) out[i]*=g*(i>N-fade?(N-i)/fade:1);
+  return out;
+}
+function gtrBuffer(c,m){
+  m=Math.round(m);
+  let b=gtrCache.get(m);
+  if(b){gtrCache.delete(m); gtrCache.set(m,b); return b;}
+  const data=gtrRender(c.sampleRate,m);
+  b=c.createBuffer(1,data.length,c.sampleRate); b.getChannelData(0).set(data);
+  gtrCache.set(m,b);
+  while(gtrCache.size>28) gtrCache.delete(gtrCache.keys().next().value);
+  return b;
+}
+function gtrOut(c){
+  if(gtrBus&&gtrBus.context===c) return gtrBus;
+  const hp=c.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=70;
+  const body=c.createBiquadFilter(); body.type='peaking'; body.frequency.value=210; body.Q.value=1.1; body.gain.value=3;
+  const air=c.createBiquadFilter(); air.type='peaking'; air.frequency.value=2600; air.Q.value=0.9; air.gain.value=2;
+  const lp=c.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=5200; lp.Q.value=0.5;
+  const v=c.createGain(); v.gain.value=0.9;
+  hp.connect(body); body.connect(air); air.connect(lp); lp.connect(v); v.connect(c.destination);
+  gtrBus=hp; return gtrBus;
+}
+/* Play one guitar note at time `when`. o.vol loudness, o.dur cuts it short, o.from slides in from another note. */
+function gtrNote(c,m,when,o){
+  o=o||{};
+  const src=c.createBufferSource(), g=c.createGain(), vol=o.vol==null?0.55:o.vol;
+  src.buffer=gtrBuffer(c,m);
+  if(o.from!=null&&o.from!==m){
+    src.playbackRate.setValueAtTime(midiToFreq(o.from)/midiToFreq(m),when);
+    src.playbackRate.linearRampToValueAtTime(1,when+0.07);
+  }
+  g.gain.setValueAtTime(vol,when);
+  if(o.dur){g.gain.setValueAtTime(vol,when+o.dur); g.gain.linearRampToValueAtTime(0.0001,when+o.dur+0.06);}
+  src.connect(g); g.connect(gtrOut(c));
+  src.start(when);
+  if(o.dur) src.stop(when+o.dur+0.08);
+  return src;
+}
+/* A chord strummed low string to high, a few milliseconds apart. frets: index 0 = high e, null = not played. */
+function gtrStrum(frets){
+  if(!$('snd').checked||state.listening) return;
+  try{
+    const c=audioCtx(); if(!c) return;
+    if(c.state==='suspended') c.resume();
+    const t=c.currentTime+0.02; let k=0;
+    for(let s=5;s>=0;s--){const f=frets[s]; if(f==null) continue; gtrNote(c,OPEN[s]+f,t+k*0.022,{vol:0.32}); k++;}
+  }catch(e){}
+}
+function strumChord(root,ci){
+  const v=barreShapes(root,ci)[0];
+  if(v&&v.frets.every(f=>f==null||(f>=0&&f<=17))) gtrStrum(v.frets);
+  else {const iv=CHORDS[ci].iv, base=48+((root-48)%12+12)%12, fr=[null,null,null,null,null,null];
+    iv.slice(0,4).forEach((i,j)=>{const m=base+i; for(let s=5-j;s>=0;s--){const f=m-OPEN[s]; if(f>=0&&f<=12&&fr[s]==null){fr[s]=f; break;}}}); gtrStrum(fr);}
+}
+
 $('neck').addEventListener('click',e=>{
   const h=e.target.closest('[data-s]'); if(!h) return;
   const m=OPEN[+h.dataset.s]+(+h.dataset.f);
@@ -2169,11 +2239,9 @@ function rmPlay(root,si){
   const up=iv.map(i=>start+i).concat([start+12]), seq=up.concat(up.slice(0,-1).reverse());
   const step=0.32, t0=c.currentTime+0.05, oscs=[], timers=[];
   seq.forEach((m,i)=>{
-    const t=t0+i*step, o=c.createOscillator(), g=c.createGain();
-    o.type='triangle'; o.frequency.value=midiToFreq(m);
-    /* Short and detached: each note dies away well before the next starts, so nothing overlaps. */
-    g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.3,t+0.008); g.gain.setValueAtTime(0.3,t+0.12); g.gain.exponentialRampToValueAtTime(0.0001,t+0.2);
-    o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+0.22); oscs.push(o);
+    const t=t0+i*step;
+    /* Short and detached: each note is damped well before the next starts, so nothing overlaps. */
+    oscs.push(gtrNote(c,m,t,{vol:0.55,dur:0.26}));
     if(!state.listening) timers.push(setTimeout(()=>setDet({midi:m,freq:midiToFreq(m),cents:0,src:'scale'}),(t-c.currentTime)*1000));
   });
   timers.push(setTimeout(()=>{rmPlaying=null; if(state.det&&state.det.src==='scale') setDet(null); renderRm();},(t0-c.currentTime+seq.length*step+0.3)*1000));
@@ -2379,6 +2447,7 @@ $('slist').addEventListener('click',e=>{
 function showCardChord(e){
   const b=e.target.closest('.ccard'); if(!b||b.dataset.ci==null) return;
   state.key=+b.dataset.root; state.kind='chord'; state.chord=+b.dataset.ci; state.strset='all';
+  unlockAudio(); strumChord(state.key,state.chord);
   if(state.voice==='triads') state.voice='barre';
   renderShapeSelect(); refresh();
   if(!$('refr').hidden) closeRef();
@@ -2465,7 +2534,7 @@ function renderStrip(cs){
   $('kbox').innerHTML=cs.map((c,i)=>'<button type="button" class="q'+c.ci+'" data-i="'+i+'" aria-pressed="'+show(c)+'" aria-label="'+(i+1)+', '+c.num.replace('°',' diminished')+', '+cofLabel(c)+'"><i>'+(i+1)+'</i><span>'+c.num+'</span><b>'+cofLabel(c)+'</b></button>').join('');
   [...$('ksmode').children].forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.m===state.cmode)));
 }
-$('kbox').addEventListener('click',e=>{const b=e.target.closest('button'); if(b) showDia(diaChords()[+b.dataset.i]);});
+$('kbox').addEventListener('click',e=>{const b=e.target.closest('button'); if(!b) return; const cd=diaChords()[+b.dataset.i]; unlockAudio(); strumChord(cd.root,cd.ci); showDia(cd);});
 $('ksmode').addEventListener('click',e=>{
   const b=e.target.closest('button'); if(!b||b.dataset.m===state.cmode) return;
   state.cmode=b.dataset.m; state.pstep=0;
@@ -2620,12 +2689,8 @@ function pPlayLick(){
   const step=60/pst.bpm/2, t0=c.currentTime+0.08, oscs=[], timers=[];
   pv.lick.forEach((n,i)=>{
     const t=t0+i*step, last=i===pv.lick.length-1, len=last?step*3:step*0.95;
-    const o=c.createOscillator(), g=c.createGain();
-    o.type='triangle'; o.frequency.value=midiToFreq(n.m);
-    if(n.mk==='/'||n.mk==='\\'){const p=pv.lick[i-1]; o.frequency.setValueAtTime(midiToFreq(p.m),t); o.frequency.exponentialRampToValueAtTime(midiToFreq(n.m),t+Math.min(0.08,step*0.4));}
-    const a=n.mk?0.2:0.3;
-    g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(a,t+0.008); g.gain.exponentialRampToValueAtTime(a*0.45,t+Math.min(0.12,len*0.5)); g.gain.exponentialRampToValueAtTime(0.0001,t+len);
-    o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+len+0.02); oscs.push(o);
+    const slide=n.mk==='/'||n.mk==='\\';
+    oscs.push(gtrNote(c,n.m,t,{vol:n.mk?0.38:0.58,dur:len,from:slide?pv.lick[i-1].m:null}));
     timers.push(setTimeout(()=>{pNow=i; renderPCur();},Math.max(0,(t-c.currentTime)*1000)));
   });
   const end=(t0-c.currentTime+pv.lick.length*step+step*2)*1000;
@@ -2745,7 +2810,7 @@ function coversPage(){return typeof window.matchMedia==='function'&&window.match
 const narrow=()=>typeof window.matchMedia==='function'&&window.matchMedia('(max-width:639px)').matches;
 /* A saved view that breaks on this device shouldn't leave a blank page: clear it and load once more. */
 try{renderAll(); try{sessionStorage.removeItem('fv-reset');}catch(_){}}
-catch(err){let again=false; try{again=sessionStorage.getItem('fv-reset')==='1';}catch(_){}
+catch(err){try{console.error(err);}catch(_){} let again=false; try{again=sessionStorage.getItem('fv-reset')==='1';}catch(_){}
   if(!again){try{sessionStorage.setItem('fv-reset','1'); localStorage.removeItem(STORE);}catch(_){} location.reload(); return;}
   throw err;}
 })();
