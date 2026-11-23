@@ -429,7 +429,7 @@ d.querySelector('button').onclick=function(){try{localStorage.removeItem('fv-sta
 <main class="wrap">
   <header>
     <h1>Fretboard Visualizer</h1>
-    <p class="sub">Standard tuning, E A D G B e. Frets 0 to 15. <span class="ver">Version 24</span></p>
+    <p class="sub">Standard tuning, E A D G B e. Frets 0 to 15. <span class="ver">Version 25</span></p>
   </header>
 
   <section class="panel" aria-label="Key and shape">
@@ -3306,7 +3306,7 @@ $('tpsvg').addEventListener('click',e=>{
   if(tp.play) tpPlay(); else {renderTpNow(); if(!state.listening){const c=unlockAudio(); if(c&&$('snd').checked) tpSoundCol(c,tp.tab.cols[tp.i],c.currentTime+0.02,0.9);}}
 });
 $('tppastebtn').addEventListener('click',()=>{const h=$('tppaste').hidden; $('tppaste').hidden=!h; $('tppastebtn').setAttribute('aria-expanded',String(h)); if(h) $('tptext').focus();});
-$('tpuse').addEventListener('click',()=>{tpLoad(tabFromText($('tptext').value),'Pasted tab','text');});
+$('tpuse').addEventListener('click',()=>{const r=tabFromText($('tptext').value); tpLoad(r,'Pasted tab','text'); if(r&&r.cols&&r.cols.length){$('tppaste').hidden=true; $('tppastebtn').setAttribute('aria-expanded','false');}});
 function tpLoad(r,name,how){
   tpStop(true);
   if(!r||!r.cols||!r.cols.length){
