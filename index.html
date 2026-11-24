@@ -537,7 +537,7 @@ d.querySelector('button').onclick=function(){try{localStorage.removeItem('fv-sta
   <section class="panel ftree" aria-label="What each chord does">
     <details id="ftree" open>
       <summary><span class="keyhead" id="fthead">What each chord does</span><span class="fthide">Hide</span><span class="ftshow">Show</span></summary>
-      <svg id="ftsvg" class="ftsvg" viewBox="0 0 660 320" role="img" aria-labelledby="fthead ftdesc"></svg>
+      <svg id="ftsvg" class="ftsvg" viewBox="0 0 660 320" role="group" aria-label="Chord function tree"></svg>
       <p class="ftdesc" id="ftdesc"></p>
       <p class="hint">Tap a chord to hear it and see it on the neck. The tree follows the key in Chords in the Key above. Tap Hide to fold it away once you know it.</p>
     </details>
@@ -2886,7 +2886,8 @@ function renderTree(cs){
   const L=i=>cofLabel(cs[i]), N=i=>cs[i].num;
   $('ftdesc').textContent=N(0)+' ('+L(0)+') is home, where the song rests. '+N(2)+' ('+L(2)+') and '+N(5)+' ('+L(5)+') share notes with it, so they can stand in for home. '+
     N(1)+' ('+L(1)+') and '+N(3)+' ('+L(3)+') move away from home. '+N(4)+' ('+L(4)+') and '+N(6)+' ('+L(6)+') build tension that pulls back to '+L(0)+'. '+
-    'A common trip around the tree: '+N(0)+' '+N(3)+' '+N(4)+' '+N(0)+', or '+[0,3,4,0].map(L).join(' ')+'.';
+    'A common trip around the tree: '+N(0)+' '+N(3)+' '+N(4)+' '+N(0)+', or '+[0,3,4,0].map(L).join(' ')+'.'+
+    (state.cmode==='min'?' In a minor key, many songs swap '+N(4)+' for a major V ('+noteName(cs[4].root,cofAcc())+') to make the pull home stronger.':'');
 }
 renderTree(diaChords());
 $('kbox').addEventListener('click',e=>{const b=e.target.closest('button'); if(!b) return; const cd=diaChords()[+b.dataset.i]; unlockAudio(); strumChord(cd.root,cd.ci); showDia(cd);});
