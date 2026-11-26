@@ -365,6 +365,11 @@ body.pnl-w{--dw:min(600px,96vw)}
 .ptabsvg .ptn{font:700 13px var(--f-mono);fill:#F2F2F2;text-anchor:middle;dominant-baseline:central}
 .ptabsvg .ptm{font:600 11px var(--f-mono);fill:#C9CDD4;text-anchor:middle}
 .ptabsvg .ptcur{fill:#1F6FEB;opacity:.55}
+.ptabsvg .ptsec{font:700 11px var(--f-body);fill:#9CC3FF}
+.ptabsvg .ptg{fill:#9AA0AA;font-weight:500}
+.ptabsvg .ptx{fill:#C9CDD4}
+.pneck .tpd.ghost{opacity:.5}
+.tpsong{max-width:100%}
 .popts{display:flex;align-items:end;gap:14px;flex-wrap:wrap;margin-top:8px;color:#F2F2F2}
 .popts .lbl{color:#C9CDD4}
 .popts select{min-height:40px;background:#1E2128;color:#F2F2F2;border:1px solid #3A3F49;border-radius:6px;padding:0 8px}
@@ -459,7 +464,7 @@ d.querySelector('button').onclick=function(){try{localStorage.removeItem('fv-sta
 <main class="wrap">
   <header>
     <h1>Fretboard Visualizer</h1>
-    <p class="sub">Standard tuning, E A D G B e. Frets 0 to 15. <span class="ver">Version 27</span></p>
+    <p class="sub">Standard tuning, E A D G B e. Frets 0 to 15. <span class="ver">Version 28</span></p>
   </header>
 
   <section class="panel" aria-label="Key and shape">
@@ -753,6 +758,7 @@ d.querySelector('button').onclick=function(){try{localStorage.removeItem('fv-sta
     <div class="btnrow">
       <label class="primary filebtn">Open a PDF or text tab<input type="file" id="tpfile" class="vh" accept=".pdf,.txt,application/pdf,text/plain"></label>
       <button type="button" class="ghost" id="tppastebtn" aria-expanded="false" aria-controls="tppaste">Paste tab</button>
+      <select id="tpsong" class="tpsong" aria-label="Built-in songs"><option value="">Built-in songs…</option></select>
     </div>
     <div class="tppaste" id="tppaste" hidden>
       <textarea id="tptext" rows="8" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Paste tab here" placeholder="e|---0---3---|&#10;B|---1---0---|&#10;G|---0---0---|&#10;D|---2---0---|&#10;A|---3---2---|&#10;E|-------3---|"></textarea>
@@ -762,7 +768,7 @@ d.querySelector('button').onclick=function(){try{localStorage.removeItem('fv-sta
     <div class="pcard tpcard" id="tpcard" hidden>
       <h3 class="ptitle" id="tpname"></h3>
       <div class="pneckwrap"><svg id="tpneck" class="pneck" role="img" aria-label="The notes to play now, on the neck" xmlns="http://www.w3.org/2000/svg"></svg></div>
-      <div class="ptabrow"><div class="ptnames" aria-hidden="true"><span>e</span><span>B</span><span>G</span><span>D</span><span>A</span><span>E</span></div>
+      <div class="ptabrow"><div class="ptnames" id="tpnames" aria-hidden="true"><span>e</span><span>B</span><span>G</span><span>D</span><span>A</span><span>E</span></div>
       <div class="ptabwrap" id="tpwrap"><svg id="tpsvg" class="ptabsvg" role="img" aria-label="The tab. Tap a note to start from there." xmlns="http://www.w3.org/2000/svg"></svg></div></div>
       <p class="tppos mono" id="tppos"></p>
       <div class="phead tpctl">
@@ -770,7 +776,8 @@ d.querySelector('button').onclick=function(){try{localStorage.removeItem('fv-sta
         <button type="button" class="ghost tpdark" id="tpback">Start over</button>
       </div>
       <div class="popts"><label><span class="lbl">Speed</span><select id="tpbpm"><option value="50">50</option><option value="60">60</option><option value="70">70</option><option value="80">80</option><option value="90">90</option><option value="100">100</option><option value="120">120</option><option value="140">140</option></select></label>
-      <label class="chk"><input type="checkbox" id="tploop"> Loop</label></div>
+      <label class="chk"><input type="checkbox" id="tploop"> Loop</label>
+      <label class="chk" id="tprepl" hidden><input type="checkbox" id="tpreps" checked> Play repeats</label></div>
     </div>
     <div class="plisten">
       <button type="button" class="primary" id="tplisten" aria-pressed="false">Listen to my guitar</button>
@@ -1130,12 +1137,13 @@ function tabBodyStart(line){
   if(!m) return -1;
   return m[0].length;
 }
-function isTabLine(line){
+function isTabLine(line,loose){
+  /* loose: for the built-in tabs, whose lines can be short or tightly packed. */
   const st=tabBodyStart(line); if(st<0) return false;
   const body=line.slice(st).replace(/\s+$/,'');
   if(body.length<6) return false;
   const dashes=(body.match(/-/g)||[]).length;
-  if(dashes<4||!/---/.test(body)) return false;
+  if(loose?dashes<2:(dashes<4||!/---/.test(body))) return false;
   const ok=(body.match(/[-0-9|hpbrsxX\/\\~().^*<>v=:\[\] ]/g)||[]).length;
   return ok>=body.length*0.9;
 }
@@ -1156,27 +1164,37 @@ function parseTabStaff(lines){
         for(let k=notes.length-1;k>=0;k--) if(notes[k].s===s){notes[k].bend=v; break;}
         i+=len-1; continue;
       }
-      notes.push({s:s,f:v,at:i,end:i+len-1,mk:pc==='h'||pc==='p'||pc==='/'||pc==='\\'||pc==='s'?(pc==='s'?'/':pc):''});
+      /* (9) is a ghost note: played lightly. */
+      const ghost=i>0&&b[i-1]==='('&&b[i+len]===')';
+      notes.push({s:s,f:v,at:i,end:i+len-1,mk:ghost?'g':pc==='h'||pc==='p'||pc==='/'||pc==='\\'||pc==='s'?(pc==='s'?'/':pc):''});
       i+=len-1;
+    }
+    /* x on a string is a muted strum: a scratch with no pitch. */
+    for(let i=0;i<b.length;i++){
+      if((b[i]==='x'||b[i]==='X')&&!/[0-9]/.test(b[i+1]||'')&&!/[0-9]/.test(b[i-1]||'')) notes.push({s:s,f:null,mute:true,at:i,end:i,mk:''});
     }
   });
   notes.sort((a,b)=>a.at-b.at||a.s-b.s);
   const cols=[];
   notes.forEach(n=>{
     const c=cols.length?cols[cols.length-1]:null;
-    if(c&&n.at<=c.end&&c.f[n.s]==null){c.f[n.s]=n.f; c.mk[n.s]=n.mk; if(n.bend!=null) c.bend[n.s]=n.bend; c.end=Math.max(c.end,n.end); return;}
-    const f=[null,null,null,null,null,null], mk=['','','','','',''], bend=[null,null,null,null,null,null];
-    f[n.s]=n.f; mk[n.s]=n.mk; if(n.bend!=null) bend[n.s]=n.bend;
-    cols.push({pos:n.at,end:n.end,f:f,mk:mk,bend:bend});
+    if(c&&n.at<=c.end&&c.f[n.s]==null&&!c.mute[n.s]){if(n.mute) c.mute[n.s]=true; else {c.f[n.s]=n.f; c.mk[n.s]=n.mk; if(n.bend!=null) c.bend[n.s]=n.bend;} c.end=Math.max(c.end,n.end); return;}
+    const f=[null,null,null,null,null,null], mk=['','','','','',''], bend=[null,null,null,null,null,null], mute=[false,false,false,false,false,false];
+    if(n.mute) mute[n.s]=true; else {f[n.s]=n.f; mk[n.s]=n.mk; if(n.bend!=null) bend[n.s]=n.bend;}
+    cols.push({pos:n.at,end:n.end,f:f,mk:mk,bend:bend,mute:mute});
   });
   return cols;
 }
 function tabFromText(text){
+  const r=tabSys(text);
+  return tabJoin(r.sys,r.odd);
+}
+function tabSys(text,loose){
   const lines=String(text||'').replace(/\t/g,'    ').split(/\r?\n/);
   const staves=[]; let i=0, odd=0;
   while(i<lines.length){
-    if(!isTabLine(lines[i])){i++; continue;}
-    let j=i; while(j<lines.length&&isTabLine(lines[j])) j++;
+    if(!isTabLine(lines[i],loose)){i++; continue;}
+    let j=i; while(j<lines.length&&isTabLine(lines[j],loose)) j++;
     const run=j-i;
     if(run>=6&&run%6===0){ for(let k=i;k<j;k+=6) staves.push(lines.slice(k,k+6)); }
     else if(run>=6) staves.push(lines.slice(i,i+6));
@@ -1189,7 +1207,7 @@ function tabFromText(text){
     if(lb[0].toUpperCase()==='E'&&lb[1].toUpperCase()==='A'&&lb[5].toLowerCase()==='e') st=st.slice().reverse();
     return parseTabStaff(st);
   });
-  return tabJoin(sys,odd);
+  return {sys:sys,odd:odd};
 }
 /* Turn staves of columns into one tab, with each column's length taken from the space before the next one. */
 function tabJoin(sys,odd){
@@ -1197,7 +1215,9 @@ function tabJoin(sys,odd){
   sys.forEach((cs,k)=>cs.forEach((c,i)=>{
     const g=i+1<cs.length?cs[i+1].pos-c.pos:null;
     if(g!=null&&g>0) gaps.push(g);
-    cols.push({f:c.f,mk:c.mk,bend:c.bend,sys:k,gap:g});
+    const o={f:c.f,mk:c.mk,bend:c.bend,sys:k,gap:g};
+    if(c.mute&&c.mute.some(Boolean)) o.mute=c.mute;
+    cols.push(o);
   }));
   const sorted=gaps.slice().sort((a,b)=>a-b), med=sorted.length?sorted[Math.floor(sorted.length/2)]:1;
   cols.forEach(c=>{
@@ -3247,15 +3267,40 @@ let pReady=true;
 /* Tab Player: open a PDF or text tab, play it in the guitar sound with each note lit on a small neck and in the tab,
    and with Listen on, check the notes played against the tab. */
 const TPSTORE='fv-tabp-1';
-const tp={tab:null,name:'',i:0,start:0,bpm:70,loop:false,wait:false,play:null,ok:0,miss:0,last:null,heard:null,lo:0,hi:12,xs:[]};
+/* Built-in tabs. Each part is one line of tab, played in order, with its name shown over the tab.
+   rep is how many times the part is played; pm marks palm muting. To add a missing part, put a new
+   entry in parts at its place in the song. */
+const TP_SONGS=[{"id":"what-a-god","name":"What A God (lead)","missing":"Not in yet: the song start, SS3 after the first Chorus, and SS3 + distortion after the Refrain.","parts":[{"name":"Chorus (SS1) ending","rep":1,"note":"","pm":0,"tab":"e|-------|\nB|-5--5--|\nG|-6--4--|\nD|-7--6--|\nA|-7--7--|\nE|-------|"},{"name":"Verse 2 (SS2)","rep":16,"note":"palm muted","pm":1,"tab":"e|-------------------------------------------------------------|\nB|-------------------------------------------------------------|\nG|-9--9--9--------------11--11--9--9--9------------------------|\nD|----------11--11--11-------------------9--11--11--9--7--(9)--|\nA|-------------------------------------------------------------|\nE|-------------------------------------------------------------|"},{"name":"Verse 2 (SS2) cont.","rep":5,"note":"palm muted, then chords","pm":1,"tab":"e|---------------------------------------------------------------------------------------------|\nB|------------------------------------------------------------------------------------5--------|\nG|-------------------------------6--6--------------6--6--6--6-------6--7--9--------6--4--6--4--|\nD|----------------------7--7--7--------7--7--7--7--------------(9)-----------7-----7--6--------|\nA|-4--4--7--7--9--9--9----------------------------------------------------------9--7-----------|\nE|---------------------------------------------------------------------------------------------|"},{"name":"Pre-Chorus","rep":1,"note":"","pm":0,"tab":"e|----------------------------------------|\nB|----------------------------------------|\nG|-7--7--7--7--9--9--9--9--9--9--9--9--9--|\nD|-7--7--7--7--7--7--7--7--9--9--9--9--9--|\nA|----------------------------------------|\nE|----------------------------------------|"},{"name":"Chorus (SS1) part 1","rep":2,"note":"","pm":0,"tab":"e|--------9------9-----9------|\nB|----10-----10-----------12--|\nG|-9----------------9---------|\nD|----------------------------|\nA|----------------------------|\nE|----------------------------|"},{"name":"Chorus (SS1) part 2","rep":2,"note":"","pm":0,"tab":"e|--------9---------9-----9------|\nB|----10--------10-----------12--|\nG|-9---------9---------9---------|\nD|-------------------------------|\nA|-------------------------------|\nE|-------------------------------|"},{"name":"Interlude","rep":1,"note":"","pm":0,"tab":"e|--------------------------------9----------|\nB|-10--9----------------10--9--------12--10--|\nG|--------9--------------------9-------------|\nD|-----------11--9---------------------------|\nA|------------------12-----------------------|\nE|-------------------------------------------|"},{"name":"Bridge 1 (SS1)","rep":2,"note":"","pm":0,"tab":"e|----------------------------9--------------9--------------------------|\nB|-10-9--------------10-9--------12-10----10----12-10-9--------------10-|\nG|-------9-----------------9-----------11----------------9--------------|\nD|----------11-9--------------------------------------------11-9--------|\nA|----------------12----------------------------------------------12----|\nE|----------------------------------------------------------------------|"},{"name":"Bridge 2 part 1","rep":1,"note":"repeat sign at start","pm":0,"tab":"e|----9------------9--9--12--12--|\nB|-------10--9-------------------|\nG|-9------------9----------------|\nD|-------------------------------|\nA|-------------------------------|\nE|-------------------------------|"},{"name":"Bridge 2 part 2","rep":6,"note":"16th notes","pm":0,"tab":"e|-----------------------------------------------------9----------|\nB|-10--12--10--9----------------(10)--12--9--10--9--------12--10--|\nG|----------------9---------------------------------9-------------|\nD|-------------------11--9----------------------------------------|\nA|--------------------------12------------------------------------|\nE|----------------------------------------------------------------|"},{"name":"Chorus (SS2) part 1","rep":1,"note":"down strokes, pairs 8x 8x 12x 4x","pm":0,"tab":"e|---------------------------------------------------------------------------------------------------------------------------------|\nB|-10--10--10--10--10--10--10--10--12--12--12--12--12--12--12--12--10--10--10--10--10--10--10--10--10--10--10--10--12--12--12--12--|\nG|-9---9---9---9---9---9---9---9---9---9---9---9---9---9---9---9---9---9---9---9---9---9---9---9---9---9---9---9---9---9---9---9---|\nD|---------------------------------------------------------------------------------------------------------------------------------|\nA|---------------------------------------------------------------------------------------------------------------------------------|\nE|---------------------------------------------------------------------------------------------------------------------------------|"},{"name":"Chorus (SS2) part 2","rep":1,"note":"16th notes","pm":0,"tab":"e|-----10--9------9----------10--9------14--12--|\nB|-10---------10-----12--10---------10----------|\nG|----------------------------------------------|\nD|----------------------------------------------|\nA|----------------------------------------------|\nE|----------------------------------------------|"},{"name":"Chorus (SS3 + dist)","rep":2,"note":"tremolo picked","pm":0,"tab":"e|-/14--16--17--16\\--|\nB|-------------------|\nG|-------------------|\nD|-------------------|\nA|-------------------|\nE|-------------------|"},{"name":"Bridge 1 (SS2 + dist)","rep":1,"note":"palm muted, repeat sign at start","pm":1,"tab":"e|-x--x---------------------------------------------------|\nB|-x--x-----------14------------------15--14------14------|\nG|-x--x--/12--11------13--14--16--11----------14------16--|\nD|-x--x---------------------------------------------------|\nA|-x--x---------------------------------------------------|\nE|-x--x---------------------------------------------------|"},{"name":"Bridge 2 (SS1 + dist)","rep":1,"note":"repeat sign at start","pm":0,"tab":"e|-9--10--12------------------------------9------------9------------------|\nB|------------10--9----------------10--------10--9--------12--10--10--12--|\nG|-------------------9-----------------9------------9-------------11--13--|\nD|----------------------11--9---------------------------------------------|\nA|-----------------------------12-----------------------------------------|\nE|------------------------------------------------------------------------|"},{"name":"Refrain part 1","rep":2,"note":"16th notes","pm":0,"tab":"e|-----10--9------9------|\nB|-10---------10-----12--|\nG|-----------------------|\nD|-----------------------|\nA|-----------------------|\nE|-----------------------|"},{"name":"Refrain part 2","rep":1,"note":"16th notes","pm":0,"tab":"e|-----10--9------14--12--|\nB|-10---------10----------|\nG|------------------------|\nD|------------------------|\nA|------------------------|\nE|------------------------|"}]}];
+function tpSongTab(sg){
+  const sys=[], secs=[];
+  sg.parts.forEach(pt=>{const r=tabSys(pt.tab,true); if(r.sys[0]&&r.sys[0].length) sys.push({cs:r.sys[0],pt:pt});});
+  const t=tabJoin(sys.map(x=>x.cs),0);
+  let i=0;
+  sys.forEach((x,k)=>{
+    const n=x.cs.length;
+    secs.push({at:i,end:i+n-1,name:x.pt.name,rep:x.pt.rep||1,note:x.pt.note||''});
+    if(x.pt.pm) for(let j=i;j<i+n;j++) t.cols[j].pm=1;
+    i+=n;
+  });
+  t.secs=secs;
+  return t;
+}
+function tpSecAt(i){const ss=tp.tab&&tp.tab.secs; if(!ss) return null; for(const s of ss) if(i>=s.at&&i<=s.end) return s; return null;}
+/* The column after i, playing each part as many times as it says when Play repeats is on. o keeps the repeat count. -1 at the end. */
+function tpStepOn(i,o){
+  const s=tpSecAt(i);
+  if(s&&i===s.end&&tp.reps&&s.rep>1){o.rc=(o.rc||0)+1; if(o.rc<s.rep) return s.at; o.rc=0;}
+  return i+1<tp.tab.cols.length?i+1:-1;
+}
+const tp={tab:null,name:'',i:0,start:0,bpm:70,loop:false,wait:false,reps:true,rc:0,play:null,ok:0,miss:0,last:null,heard:null,lo:0,hi:12,xs:[]};
 try{const v=JSON.parse(localStorage.getItem(TPSTORE)||'null'); if(v){
   if([50,60,70,80,90,100,120,140].indexOf(v.bpm)>=0) tp.bpm=v.bpm;
-  tp.loop=!!v.loop; tp.wait=!!v.wait;
+  tp.loop=!!v.loop; tp.wait=!!v.wait; if(v.reps===false) tp.reps=false;
   if(v.tab&&Array.isArray(v.tab.cols)&&v.tab.cols.length){tp.tab=v.tab; tp.name=String(v.name||'Tab');}
 }}catch(e){}
 function tpSave(withTab){
   try{
-    const o={bpm:tp.bpm,loop:tp.loop,wait:tp.wait};
+    const o={bpm:tp.bpm,loop:tp.loop,wait:tp.wait,reps:tp.reps};
     if(tp.tab){const s=JSON.stringify(tp.tab); if(s.length<400000){o.tab=tp.tab; o.name=tp.name;}}
     localStorage.setItem(TPSTORE,JSON.stringify(o));
   }catch(e){}
@@ -3288,36 +3333,50 @@ function renderTpNow(){
   if(!tp.tab) return;
   const c=tp.tab.cols[tp.i], nx=tp.tab.cols[tp.i+1];
   const g1=$('tpnow'), g2=$('tpnext');
-  if(g1) g1.innerHTML=c?c.f.map((v,s)=>v==null?'':tpDotSvg(s,v,'now')).join(''):'';
-  if(g2) g2.innerHTML=nx?nx.f.map((v,s)=>v==null?'':tpDotSvg(s,v,'next')).join(''):'';
+  const gh=(col,s)=>col.mk&&col.mk[s]==='g'?' ghost':'';
+  if(g1) g1.innerHTML=c?c.f.map((v,s)=>v==null?'':tpDotSvg(s,v,'now'+gh(c,s))).join(''):'';
+  if(g2) g2.innerHTML=nx?nx.f.map((v,s)=>v==null?'':tpDotSvg(s,v,'next'+gh(nx,s))).join(''):'';
   const r=$('tpcur'); if(r) r.setAttribute('x',c?String(tp.xs[tp.i]-TCW/2+2):'-99');
   const w=$('tpwrap'), x=tp.xs[tp.i];
   if(w&&x!=null&&(x<w.scrollLeft+30||x>w.scrollLeft+w.clientWidth-60)) w.scrollLeft=Math.max(0,x-w.clientWidth/3);
-  $('tppos').textContent=c?'Note '+(tp.i+1)+' of '+tp.tab.cols.length:'';
+  const sc=c?tpSecAt(tp.i):null;
+  $('tppos').textContent=c?(sc?sc.name+(sc.rep>1&&tp.reps?', time '+Math.min(sc.rep,(tp.rc||0)+1)+' of '+sc.rep:'')+(sc.note?' ('+sc.note+')':'')+' · ':'')+'Note '+(tp.i+1)+' of '+tp.tab.cols.length:'';
 }
 function renderTpTab(){
-  const cols=tp.tab.cols, H=16, Y0=22; let x=14; tp.xs=[];
+  const cols=tp.tab.cols, secs=tp.tab.secs||null, top=secs?34:0, H=16, Y0=22+top; let x=14; tp.xs=[];
   const p=[], bars=[];
   cols.forEach((c,i)=>{ if(i&&c.sys!==cols[i-1].sys){bars.push(x+2); x+=12;} tp.xs.push(x+TCW/2); x+=TCW; });
   const W=x+14;
-  p.push('<rect id="tpcur" class="ptcur" x="-99" y="4" width="'+(TCW-4)+'" height="'+(Y0+5*H+6)+'" rx="5"/>');
+  if(secs){ /* part names over the tab, on two rows so short parts don't overlap */
+    const ends=[-99,-99];
+    secs.forEach(s=>{
+      const lx=tp.xs[s.at]-TCW/2+2, label=s.name+(s.rep>1?' ×'+s.rep:''), w=label.length*6.6;
+      const row=lx>=ends[0]?0:lx>=ends[1]?1:(ends[0]<=ends[1]?0:1); ends[row]=lx+w+8;
+      p.push('<text class="ptsec" x="'+lx+'" y="'+(12+row*15)+'">'+label.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</text>');
+    });
+  }
+  p.push('<rect id="tpcur" class="ptcur" x="-99" y="'+(4+top)+'" width="'+(TCW-4)+'" height="'+(22+5*H+6)+'" rx="5"/>');
   for(let s=0;s<6;s++) p.push('<line class="ptl" x1="0" x2="'+W+'" y1="'+(Y0+s*H)+'" y2="'+(Y0+s*H)+'"/>');
   bars.forEach(b=>p.push('<line class="ptl" x1="'+b+'" x2="'+b+'" y1="'+Y0+'" y2="'+(Y0+5*H)+'"/><line class="ptl" x1="'+(b+4)+'" x2="'+(b+4)+'" y1="'+Y0+'" y2="'+(Y0+5*H)+'"/>'));
   cols.forEach((c,i)=>{
     const cx=tp.xs[i];
-    c.f.forEach((v,s)=>{ if(v==null) return; const y=Y0+s*H, mk=c.mk&&c.mk[s];
+    c.f.forEach((v,s)=>{ const y=Y0+s*H, mk=c.mk&&c.mk[s];
+      if(v==null){ if(c.mute&&c.mute[s]) p.push('<rect class="ptbg" x="'+(cx-8)+'" y="'+(y-7)+'" width="16" height="14"/><text class="ptn ptx" x="'+cx+'" y="'+y+'">x</text>'); return; }
+      if(mk==='g'){p.push('<rect class="ptbg" x="'+(cx-14)+'" y="'+(y-7)+'" width="28" height="14"/><text class="ptn ptg" x="'+cx+'" y="'+y+'">('+v+')</text>'); return;}
       if(mk) p.push('<text class="ptm" x="'+(cx-TCW/2)+'" y="'+(y-9)+'">'+(mk==='\\'?'\\':mk)+'</text>');
       p.push('<rect class="ptbg" x="'+(cx-11)+'" y="'+(y-7)+'" width="22" height="14"/><text class="ptn" x="'+cx+'" y="'+y+'">'+v+(c.bend&&c.bend[s]!=null?'b':'')+'</text>');
     });
     p.push('<rect class="tphit" data-i="'+i+'" x="'+(cx-TCW/2)+'" y="0" width="'+TCW+'" height="'+(Y0+5*H+12)+'"/>');
   });
   const svg=$('tpsvg'); svg.setAttribute('viewBox','0 0 '+W+' '+(Y0+5*H+12)); svg.style.width=W+'px'; svg.innerHTML=p.join('');
+  const nm=$('tpnames'); if(nm) nm.style.paddingTop=top?(14+top)+'px':'';
 }
 function renderTp(){
   const has=!!(tp.tab&&tp.tab.cols.length);
   $('tpcard').hidden=!has;
-  $('tpbpm').value=String(tp.bpm); $('tploop').checked=tp.loop; $('tpwait').checked=tp.wait;
+  $('tpbpm').value=String(tp.bpm); $('tploop').checked=tp.loop; $('tpwait').checked=tp.wait; $('tpreps').checked=tp.reps;
   if(!has) return;
+  $('tprepl').hidden=!(tp.tab.secs&&tp.tab.secs.some(s=>s.rep>1));
   if(tp.i>=tp.tab.cols.length) tp.i=0;
   $('tpname').textContent=tp.name;
   tpRange(); renderTpNeck(); renderTpTab(); renderTpNow(); tpListenUI();
@@ -3327,12 +3386,23 @@ function tpStop(keep){
   $('tpplay').textContent='Play'; $('tpplay').setAttribute('aria-pressed','false');
   if(!keep) renderTpNow();
 }
+/* A muted strum: a short, pitchless scratch. */
+let gtrNoise=null;
+function gtrMute(c,t,vol){
+  if(!gtrNoise||gtrNoise.sampleRate!==c.sampleRate){const n=Math.floor(c.sampleRate*0.07); gtrNoise=c.createBuffer(1,n,c.sampleRate); const d=gtrNoise.getChannelData(0); for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*Math.exp(-i/(n*0.22));}
+  const src=c.createBufferSource(), bp=c.createBiquadFilter(), g=c.createGain();
+  src.buffer=gtrNoise; bp.type='bandpass'; bp.frequency.value=1500; bp.Q.value=0.8; g.gain.value=vol||0.5;
+  src.connect(bp); bp.connect(g); g.connect(c.destination); src.start(t);
+  return src;
+}
 function tpSoundCol(c,col,t,len){
   const out=[]; let k=0;
+  if(col.mute&&col.mute.some(Boolean)) out.push(gtrMute(c,t,col.pm?0.4:0.55));
   for(let s=5;s>=0;s--){
     const v=col.f[s]; if(v==null) continue;
     const m=OPEN[s]+v, mk=col.mk&&col.mk[s], b=col.bend&&col.bend[s];
-    const src=gtrNote(c,m,t+k*0.012,{vol:mk?0.4:0.55,dur:Math.max(0.12,len),from:mk==='/'||mk==='\\'?m+(mk==='/'?-2:2):null});
+    const vol=mk==='g'?0.25:mk?0.4:0.55, dur=col.pm?Math.min(Math.max(0.12,len),0.18):Math.max(0.12,len);
+    const src=gtrNote(c,m,t+k*0.012,{vol:col.pm?vol*0.85:vol,dur:dur,from:mk==='/'||mk==='\\'?m+(mk==='/'?-2:2):null});
     if(b!=null&&b>v){const r0=src._base||1; src.playbackRate.setValueAtTime(r0,t+0.06); src.playbackRate.linearRampToValueAtTime(r0*Math.pow(2,(b-v)/12),t+Math.min(0.3,len*0.6));}
     out.push(src); k++;
   }
@@ -3344,21 +3414,21 @@ function tpPlay(){
   if(tp.wait&&state.listening){tpRead(null); renderTpNow(); return;}
   const c=unlockAudio(); if(!c) return;
   const step=60/tp.bpm/2, silent=state.listening||!$('snd').checked;
-  const P={next:c.currentTime+0.12,i:tp.i,timers:[],srcs:[],pump:0};
+  const P={next:c.currentTime+0.12,i:tp.i,timers:[],srcs:[],pump:0,rc:tp.rc||0};
   tp.play=P;
   const pump=()=>{
     if(tp.play!==P) return;
     while(P.next<c.currentTime+0.5){
       if(P.i>=tp.tab.cols.length){
-        if(tp.loop){P.i=tp.start; continue;}
-        P.timers.push(setTimeout(()=>{if(tp.play===P){tpStop(true); tp.i=tp.start; renderTpNow(); tpRead(null,'Done. Tap Play to go again.');}},Math.max(0,(P.next-c.currentTime)*1000)+200));
+        if(tp.loop){P.i=tp.start; P.rc=0; continue;}
+        P.timers.push(setTimeout(()=>{if(tp.play===P){tpStop(true); tp.i=tp.start; tp.rc=0; renderTpNow(); tpRead(null,'Done. Tap Play to go again.');}},Math.max(0,(P.next-c.currentTime)*1000)+200));
         return;
       }
-      const k=P.i, col=tp.tab.cols[k], len=col.steps*step;
+      const k=P.i, col=tp.tab.cols[k], len=col.steps*step, rc=P.rc;
       if(!silent){const ss=tpSoundCol(c,col,P.next,len*0.95); P.srcs.push.apply(P.srcs,ss); if(P.srcs.length>60) P.srcs.splice(0,P.srcs.length-60);}
-      P.timers.push(setTimeout(()=>{if(tp.play===P){tp.i=k; tp.colT=performance.now(); renderTpNow();}},Math.max(0,(P.next-c.currentTime)*1000)));
+      P.timers.push(setTimeout(()=>{if(tp.play===P){tp.i=k; tp.rc=rc; tp.colT=performance.now(); renderTpNow();}},Math.max(0,(P.next-c.currentTime)*1000)));
       if(P.timers.length>80) P.timers.splice(0,P.timers.length-80);
-      P.next+=len; P.i++;
+      P.next+=len; const nx=tpStepOn(k,P); P.i=nx<0?tp.tab.cols.length:nx;
     }
     P.pump=setTimeout(pump,90);
   };
@@ -3379,8 +3449,9 @@ function tpHear(d){
   if(ok) tp.ok++; else tp.miss++;
   tp.heard={m:d.midi,ok:ok};
   if(ok&&tp.wait){
-    if(tp.i<tp.tab.cols.length-1){tp.i++; renderTpNow(); tpRead(d.midi,null,want);}
-    else {tpRead(d.midi,null,want); $('tpheard').textContent='Right. That was the last note: you played the whole tab.'; tp.i=tp.start; renderTpNow(); return;}
+    let nx=tpStepOn(tp.i,tp); while(nx>=0&&!tpMidis(tp.tab.cols[nx]).length) nx=tpStepOn(nx,tp);
+    if(nx>=0){tp.i=nx; renderTpNow(); tpRead(d.midi,null,want);}
+    else {tpRead(d.midi,null,want); $('tpheard').textContent='Right. That was the last note: you played the whole tab.'; tp.i=tp.start; tp.rc=0; renderTpNow(); return;}
   } else tpRead(d.midi,null,want);
   tpHeardDot(d.midi,ok);
 }
@@ -3419,13 +3490,17 @@ $('tplisten').addEventListener('click',async()=>{
   tpListenUI(); tpRead(null);
 });
 $('tpplay').addEventListener('click',()=>{if(tp.play){tpStop();} else {tp.start=tp.i; tpPlay();}});
-$('tpback').addEventListener('click',()=>{const was=!!tp.play; tpStop(true); tp.i=0; tp.start=0; tp.ok=0; tp.miss=0; renderTpNow(); if(was) tpPlay(); else tpRead(null);});
+$('tpback').addEventListener('click',()=>{const was=!!tp.play; tpStop(true); tp.i=0; tp.start=0; tp.rc=0; tp.ok=0; tp.miss=0; renderTpNow(); if(was) tpPlay(); else tpRead(null);});
 $('tpbpm').addEventListener('change',e=>{tp.bpm=+e.target.value; tpSave(); if(tp.play){tp.start=tp.i; tpPlay();}});
 $('tploop').addEventListener('change',e=>{tp.loop=e.target.checked; tpSave();});
+$('tpreps').addEventListener('change',e=>{tp.reps=e.target.checked; tp.rc=0; tpSave(); renderTpNow(); if(tp.play){tp.start=tp.i; tpPlay();}});
+(function(){const sel=$('tpsong'); TP_SONGS.forEach(sg=>{const o=document.createElement('option'); o.value=sg.id; o.textContent=sg.name; sel.appendChild(o);});
+  sel.addEventListener('change',()=>{const sg=TP_SONGS.find(x=>x.id===sel.value); sel.value=''; if(!sg) return;
+    if(tpLoad(tpSongTab(sg),sg.name,'song')) $('tpmsg').textContent=sg.name+': '+sg.parts.length+' parts in song order, each named over the tab. Parts marked ×2, ×16 and so on play that many times while Play repeats is on. '+(sg.missing||'');});})();
 $('tpwait').addEventListener('change',e=>{tp.wait=e.target.checked; tpSave(); if(tp.wait&&tp.play&&state.listening) tpStop(); tpRead(null);});
 $('tpsvg').addEventListener('click',e=>{
   const r=e.target.closest&&e.target.closest('.tphit'); if(!r) return;
-  tp.i=+r.dataset.i; tp.start=tp.i;
+  tp.i=+r.dataset.i; tp.start=tp.i; tp.rc=0;
   if(tp.play) tpPlay(); else {renderTpNow(); if(!state.listening){const c=unlockAudio(); if(c&&$('snd').checked) tpSoundCol(c,tp.tab.cols[tp.i],c.currentTime+0.02,0.9);}}
 });
 $('tppastebtn').addEventListener('click',()=>{const h=$('tppaste').hidden; $('tppaste').hidden=!h; $('tppastebtn').setAttribute('aria-expanded',String(h)); if(h) $('tptext').focus();});
@@ -3438,7 +3513,7 @@ function tpLoad(r,name,how){
       'No tab found. Tab needs six lines of dashes and fret numbers, high e on top, like e|---0---3---|.';
     return false;
   }
-  tp.tab={cols:r.cols,lo:r.lo,hi:r.hi,systems:r.systems}; tp.name=name; tp.i=0; tp.start=0; tp.ok=0; tp.miss=0;
+  tp.tab={cols:r.cols,lo:r.lo,hi:r.hi,systems:r.systems}; if(r.secs) tp.tab.secs=r.secs; tp.name=name; tp.i=0; tp.start=0; tp.rc=0; tp.ok=0; tp.miss=0;
   tpSave(); renderTp(); tpRead(null);
   const n=tpNotes();
   $('tpmsg').textContent='Read '+n+' note'+(n===1?'':'s')+' in '+r.systems+' line'+(r.systems===1?'':'s')+' of tab'+(how==='pdf'?' from the PDF':'')+'. Tab shows the frets but not the rhythm, so the timing comes from how the notes are spaced.';
