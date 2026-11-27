@@ -82,7 +82,7 @@ select{min-height:44px;width:100%;padding:0 10px;border:1px solid var(--line);bo
 .dh{fill:var(--dot);opacity:.28;pointer-events:none}
 .dh.r{fill:var(--root)}
 .dh.t{fill:var(--gold);opacity:.45}
-.lk{fill:none;stroke:#FFFFFF;stroke-width:2.6;pointer-events:none}
+.lk{fill:none;stroke:#FFFFFF;stroke-width:3;pointer-events:none}
 .dl.t{fill:var(--on-gold)}
 .zone.shp{fill-opacity:.1;stroke-opacity:1;stroke-width:3.5}
 .dl{font:500 12px var(--f-mono);fill:var(--on-dot);text-anchor:middle;dominant-baseline:central;pointer-events:none}
@@ -540,8 +540,8 @@ d.querySelector('button').onclick=function(){try{localStorage.removeItem('fv-sta
   </section>
 
   <section class="panel" aria-label="Fretboard">
-    <div class="zbar"><span class="lbl" id="zlbl">Zoom</span><div class="seg" role="group" aria-labelledby="zlbl"><button type="button" id="zout" aria-label="Zoom out">&minus;</button><button type="button" id="zfit">Fit</button><button type="button" id="zin" aria-label="Zoom in">+</button></div></div>
-    <div class="scroll" id="neckscroll"><svg id="neck" viewBox="0 0 1380 244" role="img" aria-label="Fretboard"></svg></div>
+    <div class="zbar"><span class="lbl" id="zlbl">Zoom</span><div class="seg" role="group" aria-labelledby="zlbl"><button type="button" id="zout" aria-label="Zoom out">&minus;</button><button type="button" id="zfit">Reset</button><button type="button" id="zin" aria-label="Zoom in">+</button></div></div>
+    <div class="scroll" id="neckscroll"><svg id="neck" viewBox="0 0 1180 244" role="img" aria-label="Fretboard"></svg></div>
     <p class="hint caged" id="cagedhint" hidden></p>
     <p class="hint caged" id="trihint" hidden></p>
     <p class="hint caged" id="barrehint" hidden></p>
@@ -1448,7 +1448,7 @@ function titleText(){
 
 /* Neck geometry: fret spacing follows a real scale length, so frets get tighter up the neck.
    In CAGED view the neck drops down to leave a band on top for the shape letters. */
-const X0=64, BOARD=1300, GAP=34, VBW=X0+BOARD+16;
+const X0=64, BOARD=1100, GAP=34, VBW=X0+BOARD+16;
 let TOPY=30, H=TOPY+5*GAP+44;
 /* 22 frets: spacing shrinks at half the real rate, so the top frets still have room for a note. */
 const L=BOARD/(1-Math.pow(2,-FRETS/24));
@@ -1468,7 +1468,7 @@ function dotSvg(s,f,iv,hollow,fing,link){
   const L=state.labels, R=f===0?12:13, x=cx(f), y=sy(s);
   const label=L==='clean'?'':L==='finger'?(fing==null?'':String(fing)):L==='note'?noteName(pc,state.acc):degName(iv);
   return (hollow?'':'<circle class="dh'+cls+'" cx="'+x+'" cy="'+y+'" r="'+(R+5)+'"/>')+
-    (link?'<circle class="lk" cx="'+x+'" cy="'+y+'" r="'+(R+3)+'"/>':'')+
+    (link?'<circle class="lk" cx="'+x+'" cy="'+y+'" r="'+(R+4)+'"/>':'')+
     '<circle class="d'+cls+'" cx="'+x+'" cy="'+y+'" r="'+R+'"/>'+
     (label?'<text class="dl'+cls+'" x="'+x+'" y="'+y+'">'+label+'</text>':'');
 }
@@ -2686,7 +2686,7 @@ function rmBoxSet(){
 }
 /* Zoom: the neck can be drawn wider than the screen; it scrolls sideways and centers on the shape. */
 var ZL=[0.7,1,1.4,1.9,2.6];
-var zi=1; try{const v=+localStorage.getItem('fv-zoom'); if(Number.isInteger(v)&&v>=0&&v<ZL.length) zi=v;}catch(e){}
+var zi=1; try{const g=localStorage.getItem('fv-zoom'), v=+g; if(g!=null&&g!==''&&Number.isInteger(v)&&v>=0&&v<ZL.length) zi=v;}catch(e){}
 var neckCK='';
 function applyZoom(){
   const n=$('neck'), z=ZL[zi];
