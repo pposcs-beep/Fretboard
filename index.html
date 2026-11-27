@@ -494,7 +494,7 @@ d.querySelector('button').onclick=function(){try{localStorage.removeItem('fv-sta
 <main class="wrap">
   <header>
     <h1>Fretboard Visualizer</h1>
-    <p class="sub">Standard tuning, E A D G B e. Frets 0 to 22. <span class="ver">Version 29</span></p>
+    <p class="sub">Standard tuning, E A D G B e. Frets 0 to 22. <span class="ver">Version 30</span></p>
   </header>
 
   <section class="panel" aria-label="Key and shape">
@@ -1666,9 +1666,18 @@ function renderNeck(){
   const det=state.det;
   if(det){
     const inn=map.has(det.midi%12);
-    for(let s=0;s<6;s++){
-      for(let f=0;f<=FRETS;f++){
-        if(OPEN[s]+f!==det.midi) continue;
+    /* Light only where the note is being played: the spot given, or, for the mic, the spot inside the shape when there is one. */
+    let spots=det.pos?det.pos.slice():[];
+    if(!det.pos){
+      for(let s=0;s<6;s++) for(let f=0;f<=FRETS;f++) if(OPEN[s]+f===det.midi) spots.push([s,f]);
+      if(rbx){const inS=spots.filter(q=>rbx.set.has(q[0]+','+q[1])); if(inS.length) spots=inS;}
+      /* Still more than one: keep the one nearest the last note lit, so the light follows your hand. */
+      if(spots.length>1){const ref=detLast?detLast[1]:0; spots.sort((x,y)=>Math.abs(x[1]-ref)-Math.abs(y[1]-ref)||y[0]-x[0]); spots=[spots[0]];}
+    }
+    if(spots.length) detLast=spots[0];
+    for(const q of spots){
+      const s=q[0], f=q[1];
+      {
         if(inn){
           p.push('<circle class="ring-ok" cx="'+cx(f)+'" cy="'+sy(s)+'" r="17"/>');
         }else{
@@ -1914,10 +1923,12 @@ function setChord(cd){
   if(changed) renderNeck();
   renderRead();
 }
+var detLast=null;
 function setDet(d){
   const prev=state.det;
   state.det=d;
-  const changed=(!prev&&d)||(prev&&!d)||(prev&&d&&prev.midi!==d.midi);
+  const pk=x=>x&&x.pos?x.pos.map(q=>q.join(',')).join(';'):'';
+  const changed=(!prev&&d)||(prev&&!d)||(prev&&d&&(prev.midi!==d.midi||pk(prev)!==pk(d)));
   if(changed) renderNeck();
   renderRead();
   if(typeof pReady!=='undefined') pHear(d);
@@ -2440,7 +2451,7 @@ $('neck').addEventListener('click',e=>{
   const m=OPEN[+h.dataset.s]+(+h.dataset.f);
   pluck(m);
   if($('tabwrite').checked&&song.audio) tabTap(+h.dataset.s,+h.dataset.f);
-  setDet({midi:m,freq:midiToFreq(m),cents:0,src:'tap'});
+  setDet({midi:m,freq:midiToFreq(m),cents:0,src:'tap',pos:[[+h.dataset.s,+h.dataset.f]]});
   clearTimeout(tapTimer);
   tapTimer=setTimeout(()=>{if(state.det&&state.det.src==='tap') setDet(null);},2500);
 });
@@ -2746,19 +2757,36 @@ function rmStop(){
   rmPlaying.timers.forEach(clearTimeout);
   rmPlaying=null; setDet(null); renderRm();
 }
+/* The notes Play scale walks, low to high, each on one string and fret: the shape(s) showing,
+   shape 1 when All is showing, or one compact position near the root on the low E for other scales. */
+function rmPath(root,si){
+  const info=RMINFO[si], here=state.kind==='scale'&&state.key===root&&state.scale===si;
+  let pts=[];
+  if(info){
+    const ks=here&&rmSel().length?rmSel():[1];
+    ks.forEach((k,j)=>{const b=rmBox(root,info,k); [...b.set].forEach(x=>{const q=x.split(',').map(Number); pts.push({s:q[0],f:q[1],o:j});});});
+  }else{
+    const pcs=new Set(SCALES[si].iv.map(i=>(root+i)%12)), r=((root-OPEN[5])%12+12)%12, lo=Math.max(0,r-1), hi=Math.min(FRETS,lo+4);
+    for(let s=0;s<6;s++) for(let f=lo;f<=hi;f++) if(pcs.has((OPEN[s]+f)%12)) pts.push({s:s,f:f,o:0});
+  }
+  /* One spot per pitch: the first shape picked wins, then the thicker string. */
+  pts.sort((a,b)=>(OPEN[a.s]+a.f)-(OPEN[b.s]+b.f)||a.o-b.o||b.s-a.s);
+  const out=[], seen=new Set();
+  pts.forEach(q=>{const m=OPEN[q.s]+q.f; if(!seen.has(m)){seen.add(m); out.push(q);}});
+  return out;
+}
 function rmPlay(root,si){
   const same=rmPlaying&&rmPlaying.root===root&&rmPlaying.si===si;
   rmStop(); if(same) return;
   const c=audioCtx(); if(!c) return;
   if(c.state==='suspended') c.resume();
-  const iv=SCALES[si].iv.slice().sort((a,b)=>a-b), start=48+((root-48)%12+12)%12;
-  const up=iv.map(i=>start+i).concat([start+12]), seq=up.concat(up.slice(0,-1).reverse());
+  const up=rmPath(root,si), seq=up.concat(up.slice(0,-1).reverse());
   const step=0.32, t0=c.currentTime+0.05, oscs=[], timers=[];
-  seq.forEach((m,i)=>{
-    const t=t0+i*step;
+  seq.forEach((q,i)=>{
+    const t=t0+i*step, m=OPEN[q.s]+q.f;
     /* Short and detached: each note is damped well before the next starts, so nothing overlaps. */
     oscs.push(gtrNote(c,m,t,{vol:0.55,dur:0.26}));
-    if(!state.listening) timers.push(setTimeout(()=>setDet({midi:m,freq:midiToFreq(m),cents:0,src:'scale'}),(t-c.currentTime)*1000));
+    if(!state.listening) timers.push(setTimeout(()=>setDet({midi:m,freq:midiToFreq(m),cents:0,src:'scale',pos:[[q.s,q.f]]}),(t-c.currentTime)*1000));
   });
   timers.push(setTimeout(()=>{rmPlaying=null; if(state.det&&state.det.src==='scale') setDet(null); renderRm();},(t0-c.currentTime+seq.length*step+0.3)*1000));
   rmPlaying={root:root,si:si,oscs:oscs,timers:timers};
