@@ -226,6 +226,13 @@ select{min-height:44px;width:100%;padding:0 10px;border:1px solid var(--line);bo
 .ccard i{font:500 12px/1.3 var(--f-body);font-style:normal;color:var(--root)}
 .ccard small{font:400 12px/1.3 var(--f-mono);color:var(--muted)}
 .ccard.unk b{color:var(--muted)}
+.ccard .nn{font:700 15px/1.1 var(--f-mono);color:var(--accent)}
+.ccards.big .ccard .nn{font-size:20px}
+.nnline{font:500 15px/1.5 var(--f-mono);color:var(--fg);margin:2px 0 8px;white-space:pre-wrap;overflow-wrap:anywhere}
+.nnline span{color:var(--muted);font-family:var(--f-body)}
+.sphoto img{display:block;max-width:100%;max-height:340px;border-radius:8px;border:1px solid var(--line);margin:4px 0 8px;cursor:zoom-in}
+.refimg{display:block;width:100%;height:auto;border-radius:8px;margin:0 0 14px}
+.sphoto img[hidden],.refimg[hidden]{display:none}
 .cd-l{stroke:var(--fg);stroke-opacity:.45;stroke-width:1.2}
 .cd-n{stroke:var(--fg);stroke-width:5}
 .cd-d{fill:var(--fg)} .cd-d.r{fill:var(--root)}
@@ -239,6 +246,7 @@ select{min-height:44px;width:100%;padding:0 10px;border:1px solid var(--line);bo
 .refbar select{flex:1}
 .refname{font:700 32px/1.15 var(--f-display);margin:10px 0 2px}
 .refkey{color:var(--muted);margin:0 0 10px;font-size:17px}
+.refnn{font:600 24px/1.6 var(--f-mono);color:var(--accent);white-space:pre-wrap;margin:0 0 14px;overflow-wrap:anywhere}
 .refseq,.refnotes{font:500 22px/1.6 var(--f-mono);white-space:pre-wrap;margin:0 0 14px;overflow-wrap:anywhere}
 .refnotes{font-size:17px;line-height:1.35;white-space:pre;overflow-x:auto;border-top:1px solid var(--line);padding-top:12px}
 .ccards.big{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
@@ -689,7 +697,16 @@ d.querySelector('button').onclick=function(){try{localStorage.removeItem('fv-sta
       </div>
       <label class="lbl" for="schords">Chords, in order</label>
       <textarea class="sbox" id="schords" rows="3" placeholder="Verse: G C Em D&#10;Chorus: C G/B Am D"></textarea>
+      <p class="nnline" id="snn" hidden></p>
       <div class="ccards" id="scards"></div>
+      <div class="sphoto">
+        <span class="lbl">Photo of the chart</span>
+        <img id="simg" alt="Photo kept with this song. Tap to see it big." hidden>
+        <div class="btnrow">
+          <label class="ghost filebtn" id="sphotol"><span id="sphotot">Add photo</span><input type="file" id="sphoto" class="vh" accept="image/*"></label>
+          <button type="button" class="ghost" id="sphotox" hidden>Remove photo</button>
+        </div>
+      </div>
       <label class="lbl" for="snotes">Tabs and notes</label>
       <textarea class="sbox" id="snotes" rows="6" placeholder="Intro riff, capo, strum pattern, anything you want to remember"></textarea>
       <div class="btnrow">
@@ -703,7 +720,7 @@ d.querySelector('button').onclick=function(){try{localStorage.removeItem('fv-sta
       <label class="ghost filebtn">Import songs<input type="file" id="simport" class="vh" accept=".json,application/json"></label>
     </div>
     <p class="mono" id="smsg" role="status"></p>
-    <p class="hint">Type the chords as you'd write them, like G C/E Em7 Dsus4 G13. Section words like Verse: are fine. Each chord gets a picture; harder ones also show an easier swap. Tap a picture to see that chord on the neck. Songs save in this browser on this device, so use Export songs now and then to keep a backup.</p>
+    <p class="hint">Type the chords as you'd write them, like G C/E Em7 Dsus4 G13. Section words like Verse: are fine. Each chord gets a picture; harder ones also show an easier swap. Tap a picture to see that chord on the neck. Type the key and each chord also shows its number, like 1, 4, 5; with no key, the first chord counts as home. Add photo keeps a picture of the chart with the song, from the camera or your photos. Songs save in this browser on this device, so use Export songs now and then to keep a backup.</p>
   </section>
 
   <div class="refr" id="refr" hidden role="dialog" aria-modal="true" aria-labelledby="refname">
@@ -711,7 +728,9 @@ d.querySelector('button').onclick=function(){try{localStorage.removeItem('fv-sta
       <div class="refbar"><select id="refsel" aria-label="Song"></select><button type="button" class="primary" id="refclose">Close</button></div>
       <h2 class="refname" id="refname"></h2>
       <p class="refkey" id="refkey"></p>
+      <img class="refimg" id="refimg" alt="Photo kept with this song" hidden>
       <pre class="refseq" id="refseq"></pre>
+      <pre class="refnn" id="refnn" hidden></pre>
       <div class="ccards big" id="refcards"></div>
       <pre class="refnotes" id="refnotes"></pre>
     </div>
@@ -2997,8 +3016,9 @@ function chordSvg(frets,root){
   return p.join('');
 }
 const SNECK={maj:0,m:1,'7':2,maj7:3,m7:4,dim:5,aug:6,sus2:7,sus4:8,m7b5:9,dim7:10,add9:11,'6':12,m6:13};
-function cardHtml(c){
-  if(c.unk) return '<div class="ccard unk"><b>'+sEsc(c.text)+'</b><small>No picture for this one yet</small></div>';
+function cardHtml(c,k){
+  const nn=k?nnTok(c.text,k):'';
+  if(c.unk) return '<div class="ccard unk"><b>'+sEsc(c.text)+'</b>'+(nn?'<span class="nn">'+sEsc(nn)+'</span>':'')+'<small>No picture for this one yet</small></div>';
   const v=sVoice(c.root,c.q,c.bass), fl=c.flat, nm=sNm(c.root,fl);
   const notes=SIV[c.q].map(i=>sNm((c.root+i)%12,fl));
   if(c.bass!=null&&notes.indexOf(sNm(c.bass,fl))<0) notes.unshift(sNm(c.bass,fl));
@@ -3008,9 +3028,31 @@ function cardHtml(c){
   if(c.bass!=null) lines.push('Easier: '+nm+ssym(c.q));
   else if(SSUB[c.q]&&!(v&&v.swapped)) lines.push('Easier: '+nm+ssym(SSUB[c.q]));
   const nq=v&&SNECK[v.q]!=null?SNECK[v.q]:SNECK[c.q];
-  return '<button type="button" class="ccard"'+(nq!=null?' data-root="'+c.root+'" data-ci="'+nq+'"':'')+' aria-label="'+sEsc(c.text)+(lines.length?', '+sEsc(lines.join(', ')):'')+'"><b>'+sEsc(c.text)+'</b>'+
+  return '<button type="button" class="ccard"'+(nq!=null?' data-root="'+c.root+'" data-ci="'+nq+'"':'')+' aria-label="'+sEsc(c.text)+(nn?', number '+sEsc(nn):'')+(lines.length?', '+sEsc(lines.join(', ')):'')+'"><b>'+sEsc(c.text)+'</b>'+(nn?'<span class="nn">'+sEsc(nn)+'</span>':'')+
     (v?chordSvg(v.frets,c.root):'')+lines.map(l=>'<i>'+sEsc(l)+'</i>').join('')+'<small>'+notes.join(' ')+'</small></button>';
 }
+/* Nashville numbers: each chord's place in the song's key. A minor key counts from its own home chord, so Em in E minor is 1m. */
+const NNMAJ=['1','b2','2','b3','3','4','#4','5','b6','6','b7','7'], NNMIN=['1','b2','2','3','#3','4','b5','5','6','#6','7','#7'];
+function nnKey(s){
+  const t=String(s&&s.key||'').trim().split(/\s+/)[0]||'';
+  let c=t?sParse(t):null, guess=false;
+  if(!c){c=sChords(s&&s.chords)[0]||null; guess=true;}
+  if(!c) return null;
+  const q=c.q||'', minor=/^m(?!aj)/.test(q)||(!guess&&/minor/i.test(String(s.key)));
+  return {root:c.root,minor:minor,guess:guess,name:guess?c.text.replace(/\/.*$/,''):t.length<String(s.key).trim().length?String(s.key).trim():t};
+}
+function nnNum(pc,k){return (k.minor?NNMIN:NNMAJ)[((pc-k.root)%12+12)%12];}
+function nnTok(tok,k){
+  if(!k||!sParse(tok)) return tok;
+  const m=tok.match(/^([\[(]*)([A-G][#b]?)(.*?)([\]),.;]*)$/); if(!m) return tok;
+  let rest=m[3], bass='';
+  if(!/6\/9/.test(rest)){const sl=rest.match(/^(.*)\/([A-G][#b]?)$/); if(sl){rest=sl[1]; bass='/'+nnNum(sPc(sl[2]),k);}}
+  /* A number right after a number reads wrong (B7 as 57), so a leading 7, 9 or 13 is raised: 5⁷. */
+  rest=rest.replace(/^\d+/,d=>d.split('').map(x=>'⁰¹²³⁴⁵⁶⁷⁸⁹'[+x]).join(''));
+  return m[1]+nnNum(sPc(m[2]),k)+rest+bass+m[4];
+}
+function nnLine(text,k){return k?String(text||'').replace(/[^\s,|]+/g,t=>nnTok(t,k)):'';}
+function nnCaption(k){return k?(k.guess?'In numbers, with '+k.name+' as home: ':'In numbers, key of '+k.name+': '):'';}
 const SONGS_KEY='fv-songs-1';
 let songs={v:1,sel:null,list:[]};
 try{const s=JSON.parse(localStorage.getItem(SONGS_KEY)||'null'); if(s&&Array.isArray(s.list)) songs=s;}catch(e){}
@@ -3028,7 +3070,9 @@ function renderSongList(){
 }
 function renderCards(){
   const s=curSong();
-  $('scards').innerHTML=s?sChords(s.chords).map(cardHtml).join(''):'';
+  const k=s?nnKey(s):null, nl=s?nnLine(s.chords,k).trim():'';
+  $('scards').innerHTML=s?sChords(s.chords).map(c=>cardHtml(c,k)).join(''):'';
+  $('snn').hidden=!nl; $('snn').innerHTML=nl?'<span>'+sEsc(nnCaption(k))+'</span>'+sEsc(nl):'';
 }
 function renderSongs(){
   renderSongList();
@@ -3036,7 +3080,7 @@ function renderSongs(){
   $('sedit').hidden=!s;
   if(!s) return;
   $('sname').value=s.name||''; $('skey').value=s.key||''; $('schords').value=s.chords||''; $('snotes').value=s.notes||'';
-  renderCards();
+  renderCards(); renderPhoto();
 }
 function newSong(){
   const s={id:'s'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),name:'',key:'',chords:'',notes:'',updated:Date.now()};
@@ -3052,7 +3096,7 @@ $('slist').addEventListener('click',e=>{
     const s=curSong(); if(!s) return;
     s[f]=$(id).value; s.updated=Date.now(); songsSave();
     if(f==='name') renderSongList();
-    if(f==='chords') renderCards();
+    if(f==='chords'||f==='key') renderCards();
   });
 });
 function showCardChord(e){
@@ -3073,6 +3117,7 @@ $('sdel').addEventListener('click',()=>{
   const s=curSong(); if(!s) return;
   if($('sdel').dataset.arm!=='1'){delArm(true); return;}
   delArm(false);
+  if(s.photo) phDel(s.id);
   songs.list=songs.list.filter(x=>x.id!==s.id); songs.sel=songs.list.length?songs.list[songs.list.length-1].id:null;
   songsSave(true); renderSongs(); $('smsg').textContent='Deleted '+(s.name||'the song')+'.';
 });
@@ -3085,7 +3130,9 @@ $('stabpull').addEventListener('click',()=>{
 });
 $('sexport').addEventListener('click',async()=>{
   if(!songs.list.length){$('smsg').textContent='No songs to export yet.'; return;}
-  const r=await saveText('my-songs.json',JSON.stringify({app:'Fretboard Visualizer',v:1,list:songs.list},null,1));
+  const list=[];
+  for(const x of songs.list){const y=Object.assign({},x); if(x.photo){const u=await phGet(x.id); if(u) y.photo=u; else delete y.photo;} list.push(y);}
+  const r=await saveText('my-songs.json',JSON.stringify({app:'Fretboard Visualizer',v:1,list:list},null,1));
   $('smsg').textContent=r.replace('Tab exported.','Exported '+songs.list.length+' song'+(songs.list.length===1?'':'s')+'.');
 });
 $('simport').addEventListener('change',e=>{
@@ -3099,6 +3146,7 @@ $('simport').addEventListener('change',e=>{
       list.forEach(x=>{
         if(!x||typeof x!=='object') return;
         const s={id:String(x.id||('s'+Math.random().toString(36).slice(2))),name:String(x.name||''),key:String(x.key||''),chords:String(x.chords||''),notes:String(x.notes||''),updated:+x.updated||Date.now()};
+        if(typeof x.photo==='string'&&/^data:image\/(jpeg|png|webp|gif);base64,/.test(x.photo)){s.photo=1; phPut(s.id,x.photo);}
         const i=songs.list.findIndex(y=>y.id===s.id);
         if(i>=0) songs.list[i]=s; else songs.list.push(s);
         n++;
@@ -3111,13 +3159,74 @@ $('simport').addEventListener('change',e=>{
   };
   rd.readAsText(f);
 });
+/* Photos live in this browser's photo store (IndexedDB), one per song, so big pictures don't crowd out the songs themselves. */
+const PH={db:null,cache:new Map()};
+function phDb(){
+  return new Promise((res,rej)=>{
+    if(PH.db) return res(PH.db);
+    let idb=null; try{idb=window.indexedDB;}catch(e){}
+    if(!idb) return rej(new Error('none'));
+    const r=idb.open('fv-photos',1);
+    r.onupgradeneeded=()=>{r.result.createObjectStore('p');};
+    r.onsuccess=()=>{PH.db=r.result; res(PH.db);};
+    r.onerror=()=>rej(r.error);
+  });
+}
+function phTx(mode,fn){return phDb().then(db=>new Promise((res,rej)=>{const t=db.transaction('p',mode), q=fn(t.objectStore('p')); t.oncomplete=()=>res(q&&q.result); t.onerror=()=>rej(t.error);}));}
+function phGet(id){if(PH.cache.has(id)) return Promise.resolve(PH.cache.get(id)); return phTx('readonly',st=>st.get(id)).then(u=>{if(u) PH.cache.set(id,u); return u||null;}).catch(()=>null);}
+function phPut(id,u){PH.cache.set(id,u); return phTx('readwrite',st=>st.put(u,id)).then(()=>true).catch(()=>false);}
+function phDel(id){PH.cache.delete(id); return phTx('readwrite',st=>st.delete(id)).catch(()=>{});}
+/* Shrink a photo so its longest side is at most 1600 pixels, as a JPEG. */
+function phShrink(file){
+  return new Promise((res,rej)=>{
+    const url=URL.createObjectURL(file), im=new Image();
+    im.onload=()=>{
+      try{
+        const sc=Math.min(1,1600/Math.max(im.naturalWidth,im.naturalHeight)), w=Math.max(1,Math.round(im.naturalWidth*sc)), h=Math.max(1,Math.round(im.naturalHeight*sc));
+        const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+        const g=cv.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,w,h); g.drawImage(im,0,0,w,h);
+        URL.revokeObjectURL(url); res(cv.toDataURL('image/jpeg',0.82));
+      }catch(e){URL.revokeObjectURL(url); rej(e);}
+    };
+    im.onerror=()=>{URL.revokeObjectURL(url); rej(new Error('bad image'));};
+    im.src=url;
+  });
+}
+function renderPhoto(){
+  const s=curSong(), img=$('simg');
+  $('sphotot').textContent=s&&s.photo?'Change photo':'Add photo';
+  $('sphotox').hidden=!(s&&s.photo);
+  img.hidden=true; if(img.removeAttribute) img.removeAttribute('src');
+  if(s&&s.photo) phGet(s.id).then(u=>{if(u&&curSong()===s){img.src=u; img.hidden=false;}});
+}
+$('sphoto').addEventListener('change',async e=>{
+  const f=e.target.files&&e.target.files[0], s=curSong(); e.target.value='';
+  if(!f||!s) return;
+  $('smsg').textContent='Adding the photo…';
+  try{
+    const u=await phShrink(f);
+    if(!(await phPut(s.id,u))){$('smsg').textContent='Could not keep the photo on this device.'; return;}
+    s.photo=1; s.updated=Date.now(); songsSave(true); renderPhoto();
+    $('smsg').textContent='Photo added to '+(s.name||'this song')+'.';
+  }catch(err){$('smsg').textContent='That photo would not open. Try taking it again.';}
+});
+$('sphotox').addEventListener('click',()=>{
+  const s=curSong(); if(!s||!s.photo) return;
+  phDel(s.id); delete s.photo; s.updated=Date.now(); songsSave(true); renderPhoto();
+  $('smsg').textContent='Photo removed.';
+});
+$('simg').addEventListener('click',openRef);
 function renderRef(){
   const s=curSong(); if(!s) return;
   $('refsel').innerHTML=songs.list.map(x=>'<option value="'+sEsc(x.id)+'"'+(x.id===s.id?' selected':'')+'>'+sEsc(x.name||'Untitled song')+'</option>').join('');
   $('refname').textContent=s.name||'Untitled song';
   $('refkey').textContent=s.key?'Key of '+s.key:'';
   $('refseq').textContent=s.chords||'';
-  $('refcards').innerHTML=sChords(s.chords).map(cardHtml).join('');
+  const k=nnKey(s), nl=nnLine(s.chords,k).trim();
+  $('refcards').innerHTML=sChords(s.chords).map(c=>cardHtml(c,k)).join('');
+  $('refnn').hidden=!nl; $('refnn').textContent=nl;
+  $('refimg').hidden=true; if($('refimg').removeAttribute) $('refimg').removeAttribute('src');
+  if(s.photo) phGet(s.id).then(u=>{if(u&&curSong()===s&&!$('refr').hidden){$('refimg').src=u; $('refimg').hidden=false;}});
   $('refnotes').textContent=s.notes||''; $('refnotes').hidden=!s.notes;
 }
 let refFrom=null;
